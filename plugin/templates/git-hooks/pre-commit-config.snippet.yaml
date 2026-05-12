@@ -1,0 +1,30 @@
+# pre-commit-config.snippet.yaml — adopter snippet for the pre-commit framework
+# (https://pre-commit.com). Paste this hook entry into your project's
+# `.pre-commit-config.yaml` under `repos: -> hooks:`.
+#
+# The hook runs check-runbook-drift only when a `*-linear-work-ticket.md`
+# file is staged. Edit args[1] / args[2] to point at the two runbooks you keep
+# in sync, and args[0] to the absolute path of the drift script in your
+# jm-workflow checkout.
+#
+# Mirror `*-linear-new-ticket.md` or `*-linear-status-ticket.md` too?
+# Duplicate this hook entry with a matching `files:` regex and that pair's
+# paths in args. Don't broaden the regex alone — staged new/status files
+# would compare against the work-ticket pair and silently pass.
+#
+# Bypass for a single commit:  `SKIP=runbook-drift git commit ...`
+# Bump threshold:               `DRIFT_THRESHOLD=80 git commit ...`
+
+- repo: local
+  hooks:
+    - id: runbook-drift
+      name: runbook drift-test
+      language: system
+      pass_filenames: false
+      # Trigger only when a runbook is staged; framework matches against staged paths.
+      files: '(^|/)[a-z]+-linear-work-ticket\.md$'
+      entry: bash -c '"$0" "$1" "$2"'
+      args:
+        - /Users/YOU/Documents/local/jm-workflow/plugin/tools/check-runbook-drift.sh
+        - /Users/YOU/Documents/local/oneonme/.claude/commands/oom-linear-work-ticket.md
+        - /Users/YOU/Documents/local/jm/home-lab/.claude/commands/jm-linear-work-ticket.md
