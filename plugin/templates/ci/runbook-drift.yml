@@ -1,0 +1,113 @@
+# runbook-drift.yml — adopter CI stub
+#
+# Drop this file at `.github/workflows/runbook-drift.yml` in either of the
+# two repos that hold the mirrored runbooks. On a PR that touches the
+# work-ticket runbook, it checks out *this* repo's mirror plus the sibling
+# repo's mirror, runs check-runbook-drift, and posts a comment on the PR
+# if drift events exceed DRIFT_THRESHOLD.
+#
+# Configure the three env-vars below for your project. The
+# `sibling_repo` slug must be a repo the workflow's GITHUB_TOKEN can
+# read; for cross-org mirrors, swap in a fine-scoped PAT via secrets.
+
+name: runbook-drift
+
+on:
+  pull_request:
+    paths:
+      - '**/*-linear-work-ticket.md'
+
+permissions:
+  contents: read
+  pull-requests: write   # for the drift comment
+
+env:
+  # --- Adopter: edit these four values ---
+  # Path to this repo's runbook (the one touched by the PR).
+  THIS_RUNBOOK: .claude/commands/REPLACE-linear-work-ticket.md
+  # Sibling repo (OWNER/REPO) + path to the mirror runbook.
+  SIBLING_REPO: OWNER/REPO
+  SIBLING_RUNBOOK: .claude/commands/REPLACE-linear-work-ticket.md
+  # Where jm-workflow is published (for the drift script).
+  JM_WORKFLOW_REPO: OWNER/jm-workflow
+  # Optional override (default 50 inside the script).
+  DRIFT_THRESHOLD: '50'
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+        with:
+          path: this-repo
+
+      - name: Checkout sibling repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.SIBLING_REPO }}
+          path: sibling-repo
+          # If sibling is private and in a different org, set a fine-scoped PAT:
+          # token: ${{ secrets.SIBLING_REPO_TOKEN }}
+
+      - name: Checkout jm-workflow (for the drift script)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.JM_WORKFLOW_REPO }}
+          path: jm-workflow
+
+      - name: Run drift check
+        id: drift
+        run: |
+          set -o pipefail
+          SCRIPT=jm-workflow/plugin/tools/check-runbook-drift.sh
+          chmod +x "$SCRIPT"
+          # Capture exit code without failing the step; we want to post a
+          # comment with the count either way.
+          set +e
+          OUTPUT="$("$SCRIPT" "this-repo/$THIS_RUNBOOK" "sibling-repo/$SIBLING_RUNBOOK" 2>&1)"
+          RC=$?
+          set -e
+          echo "$OUTPUT"
+          # Multi-line output to GITHUB_OUTPUT.
+          {
+            echo "rc=$RC"
+            echo 'summary<<EOF'
+            echo "$OUTPUT"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Comment on PR if drift exceeds threshold
+        if: steps.drift.outputs.rc != '0'
+        uses: actions/github-script@v7
+        env:
+          # Pass via env, not interpolated into the script string — drift
+          # output could include PR-controlled runbook text containing
+          # backticks that would otherwise break out of the JS template
+          # literal and execute arbitrary code with workflow permissions.
+          DRIFT_SUMMARY: ${{ steps.drift.outputs.summary }}
+        with:
+          script: |
+            const summary = process.env.DRIFT_SUMMARY || '';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: [
+                '## Runbook drift detected',
+                '',
+                'The two near-mirror runbooks diverged beyond the configured threshold.',
+                'Reconcile the change in both repos, or bump `DRIFT_THRESHOLD` in',
+                '`.github/workflows/runbook-drift.yml` with a justifying note.',
+                '',
+                '```',
+                summary,
+                '```',
+              ].join('\n'),
+            });
+
+      - name: Fail job on drift
+        if: steps.drift.outputs.rc != '0'
+        run: |
+          echo "drift exceeds threshold — see PR comment for details" >&2
+          exit 1
