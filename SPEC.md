@@ -211,7 +211,7 @@ JM's `~/.claude/CLAUDE.md` is ~75% transferable principles + ~25% personal wirin
 
 ## Migration roadmap (recommended order)
 
-1. **Drift fix** in JM's own repos: canonical-plus-overlay split for `oom-linear-work-ticket` ↔ `jm-linear-work-ticket` (~800-line forks)
+1. **Drift fix** in JM's own repos: drift-test script for `oom-linear-work-ticket` ↔ `jm-linear-work-ticket` (see Phase 1 recon below — chose drift-test over canonical-plus-overlay)
 2. **Plugin contents migration** (rules → agents → commands → hooks → patches → skills → templates)
 3. **Install layer** (install.sh + doctor.sh + tweakcc-install/reapply + shell-snippets)
 4. **Personal templates** (`dot-me/` schemas)
@@ -231,3 +231,46 @@ All findings captured in this spec derived from 6 parallel audits dispatched 202
 - tweakcc catalog for new patches
 
 Raw audit outputs in conversation transcript; this spec is the synthesized layer.
+
+## Phase 1 recon (2026-05-12)
+
+Performed read-only from oneonme cwd. Real drift between `oom-linear-work-ticket.md` (809 lines) and `jm-linear-work-ticket.md` (882 lines, home-lab):
+
+| Metric | Value |
+|---|---|
+| Net file delta | 73 lines |
+| Line events | +716 / −643 / ~75 modified |
+| Section structure | Near-identical (86 vs 89 headers; 3 extra subheaders in home-lab for `## Workflow states`) |
+| Drift category — pure substitution | ~80% (`oneonme`↔`home-lab`, `OOM-N`↔`JM-N`, `staging`↔`main`, Linear URL slugs, command name) |
+| Drift category — project-specific lists | ~15% (test commands, self-modification file list, project-specific NO list) |
+| Drift category — true content forks | ~5% (`## Workflow states` with `In Bot Review` state from JM-94 only in home-lab) |
+
+### Architecture decision: Option 1 (drift-test only)
+
+Three options evaluated:
+
+| Option | Description | Lift | Verdict |
+|---|---|---|---|
+| 1 | Keep both files, ship drift-test script that strips identifier tokens + flags divergence above threshold | Low | **CHOSEN** |
+| 2 | Template + per-project config.yml + render step that emits committed files | High | Reserved for if drift grows past ~20% true-fork |
+| 3 | Plugin canonical text + per-project overlay block with import/include semantics | Medium (but unverified — CC slash-command loader may not support `@import` inside `.md`) | Skipped — verification cost high |
+
+Rationale: today's drift is ~80% identifier-swap noise + small true-fork. Option 1 captures visibility without changing how CC loads commands. Per `feedback_session_scope_one_repo.md` blessed "byte-identical mirror specs guarded by drift test" pattern.
+
+### Phase 1 deliverables
+
+- `tools/check-runbook-drift.sh` in jm-workflow plugin — strips `oneonme|home-lab|OOM|JM|staging|main` + Linear URL slugs + command-name tokens, diffs stripped versions, exits non-zero if delta exceeds threshold
+- Pre-commit hook installation snippet for each adopter project (`.git/hooks/pre-commit` or pre-commit framework entry)
+- CI workflow stub (GitHub Actions) for adopters that run drift-test on PRs touching `*-linear-work-ticket.md`
+
+Phase 1 runs at jm-workflow cwd, not from oneonme or home-lab. Project-side wiring (pre-commit hook installation) runs separately at each project's cwd.
+
+## tweakcc 2.1.139 patch state (2026-05-12)
+
+Verified upgrade path: `claude install 2.1.139 --force` then `tweakcc-pin 2.1.139`. Results:
+
+- **Themes:** 408 colors patched across 6 themes — full restoration ✓
+- **Prompts:** 4/6 patched (`communication-style`, `doing-tasks-no-additions`, `tone-concise-output-short`, `agent-prompt-claude-guide-agent`) ✓
+- **Prompts lost markers on 2.1.139:** `system-prompt-phase-four-of-plan-mod`, `system-prompt-output-efficiency` — upstream tweakcc patch fix needed
+
+Implication for jm-workflow patch catalog: ship the 4 working patches as Tier 2 default; mark the 2 broken ones as "pending tweakcc upstream fix" with skip-on-marker-miss semantics in the install script. Validates `reference_tweakcc_diagnostics.md` recurring-split pattern (themes survive Bun shape changes, some prompts don't).
