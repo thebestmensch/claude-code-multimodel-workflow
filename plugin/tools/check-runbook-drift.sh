@@ -28,6 +28,10 @@
 set -o errexit -o nounset -o pipefail
 
 THRESHOLD="${DRIFT_THRESHOLD:-50}"
+if ! [[ "$THRESHOLD" =~ ^[0-9]+$ ]]; then
+  echo "error: DRIFT_THRESHOLD must be a non-negative integer, got: $THRESHOLD" >&2
+  exit 2
+fi
 
 if [[ $# -ne 2 ]]; then
   echo "usage: $(basename "$0") FILE_A FILE_B" >&2
