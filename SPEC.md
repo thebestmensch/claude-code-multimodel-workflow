@@ -203,11 +203,47 @@ JM's `~/.claude/CLAUDE.md` is ~75% transferable principles + ~25% personal wirin
 
 ## Open questions for future iteration
 
-- Per-prompt opt-out config (`~/.jm-workflow/disabled-patches.txt`)
-- Verify which of two near-duplicate subagent-prompt files CC actually injects (`subagent-delegation-examples` vs `subagent-prompt-writing-examples`)
+- Verify which of two near-duplicate subagent-prompt files CC actually injects (`subagent-delegation-examples` vs `subagent-prompt-writing-examples`) — read-only spike at jm-workflow cwd
 - Future addendum patches for shell-compat / command-prefix-aliases learnings
 - Future: ship a `jm-linear-agent` companion package?
-- Default branch name for teammate adoption: `agent/` vs `<initials>/`?
+
+## Resolved design decisions
+
+### Per-prompt opt-out config (2026-05-12)
+
+**Shape:** `~/.jm-workflow/disabled-patches.txt` — one tweakcc marker name per line, `#` comments allowed, blank lines ignored. Missing file = nothing disabled (all default).
+
+```
+# ~/.jm-workflow/disabled-patches.txt
+# Disable the prompt patches you don't want applied
+system-prompt-phase-four-of-plan-mod  # broken on CC 2.1.139, pending upstream
+# communication-style                  # uncomment to skip
+```
+
+**Install-time behavior:** `install.sh --select` writes this file based on interactive component picks. Hand-editable afterward — re-run `install.sh --apply` re-reads it.
+
+**Apply-time behavior:** Pre-apply step in `tweakcc-install` walks marker list, skips any whose name appears in disabled-patches.txt. Implementation: `grep -vxF -f disabled-patches.txt patches.txt`.
+
+**Rationale:** Plain text over YAML — single-column list, hand-editable, grep-friendly, no parser dependency. Comment support lets users annotate *why* a patch is disabled without losing the line on diff.
+
+### Adopter branch prefix (2026-05-12)
+
+**Human branches:** Configurable. Default = lowercase initials extracted from `git config user.name` (e.g. `James Mensch` → `jm/`). Install.sh prompts with detected default; user accepts or overrides; result written to `~/.jm-workflow/config.toml` under `[branches] human_prefix = "jm/"`.
+
+**Agent branches:** Hardcoded `agent/`. Matches both oneonme (`.claude/rules/agent-conventions.md`) and home-lab conventions; prefix separation enables PR-stream filtering + branch-protection rules per agent vs human work.
+
+**Config file shape:**
+```toml
+# ~/.jm-workflow/config.toml
+[branches]
+human_prefix = "jm/"        # set by install.sh, override anytime
+agent_prefix = "agent/"     # do not change unless you also retune CI
+
+[defaults]
+default_pr_base = "staging" # oneonme convention; "main" for solo repos
+```
+
+**Rationale:** Hardcoding `agent/` matches both reference projects today and prevents accidental overlap with human work; making the human prefix configurable lets adopters preserve their existing convention (every team has one). TOML over JSON for human-edit friendliness.
 
 ## Migration roadmap (recommended order)
 
