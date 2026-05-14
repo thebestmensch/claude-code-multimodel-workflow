@@ -1,0 +1,47 @@
+# Memory Index — <PROJECT_NAME>
+
+This is the project's auto-loaded memory index. Entries cited here load into every Claude Code session opened in this workspace.
+
+<!-- The "split-when-bloated" pattern: while MEMORY.md is small, inline all entries under the sections below. When MEMORY.md grows past ~24 KB / 200 lines (the harness auto-load cap), split the largest section(s) into sibling files (MEMORY-feedback.md, MEMORY-reference.md) and rewrite MEMORY.md as a slim meta-index with section pointers. The home-lab project's memory dir is the working pattern. -->
+
+## How to scan memory
+
+- Scanning for a remembered rule → check `## Feedback` (or `MEMORY-feedback.md` after split)
+- Scanning for "where is X" / external-system pointers → check `## Reference` (or `MEMORY-reference.md` after split)
+- Scanning for active project state → check `## Project` (always inlined here, even after split)
+
+## How to add new entries
+
+1. Create `<prefix>_<slug>.md` in this directory with frontmatter:
+
+   ```markdown
+   ---
+   name: <short-kebab-case-slug>
+   description: <one-line summary>
+   metadata:
+     type: <user | feedback | project | reference>
+   ---
+   ```
+
+2. Append a pointer to the matching section (`feedback_*` → Feedback, `reference_*` → Reference, `project_*` → Project): `- [Title](<filename>.md) — one-line hook under 150 chars`
+3. Commit and push to the memory backup repo (if one is configured) so the entry survives off-machine.
+
+## Project
+
+<!-- Active project state, in-flight initiatives, recent incidents. Always inlined here even after split — small + load-bearing on every session. -->
+
+<!-- - [<Title>](<filename>.md) — <one-line hook> -->
+
+## Feedback
+
+<!-- User-correction-driven and validated-pattern rules. -->
+<!-- After split, replace this section with: "Moved to [MEMORY-feedback.md](MEMORY-feedback.md) — N entries." -->
+
+<!-- - [<Title>](<filename>.md) — <one-line hook> -->
+
+## Reference
+
+<!-- External-system pointers, platform behavior, "where to look" knowledge. -->
+<!-- After split, replace this section with: "Moved to [MEMORY-reference.md](MEMORY-reference.md) — N entries." -->
+
+<!-- - [<Title>](<filename>.md) — <one-line hook> -->

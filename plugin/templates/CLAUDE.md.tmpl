@@ -1,0 +1,75 @@
+# <PROJECT_NAME>
+
+<!-- One-paragraph description of what this project is and who it serves. -->
+<PROJECT_DESCRIPTION>
+
+<!-- Compaction guidance: preserve modified files list, failing tests, current deploy target, debugging hypothesis, active branch. -->
+
+## Services
+
+<!-- Table of subsystems / services / packages in this workspace. Adjust columns to fit. -->
+
+| Service | Path | Port | UI Name |
+|---------|------|------|---------|
+| <service-1> | `<path>` | <port-or-dash> | <ui-name> |
+| <service-2> | `<path>` | <port-or-dash> | <ui-name> |
+
+## Core Flow
+
+<!-- 3-7 numbered steps describing the primary user/system flow. Omit if N/A. -->
+
+1. **<Step>** — <what happens>
+2. **<Step>** — <what happens>
+
+## Conventions
+
+- **Git**: <monorepo? polyrepo? single history? where to run git from>
+- **Git workflow**: Feature branches → `<intermediate>` → `<production>`
+- **Branch naming**: `<HUMAN_BRANCH_PREFIX><feature-name>` (humans), `<AGENT_BRANCH_PREFIX><slug>` (autonomous agents). See `.claude/rules/agent-conventions.md`.
+- **API contracts**: <how schema flows between backend and clients, if applicable>
+- **Auth**: <auth scheme>
+- **Error tracking**: <Sentry / other>
+- **Analytics**: <Mixpanel / Segment / other>
+
+## Dev Environment
+
+- **Task runner**: <just / make / npm scripts / etc.>
+- **Host OS**: <macOS / Linux>
+- **Shell**: <zsh / bash>
+- **Timezone**: <IANA tz>
+- **Package managers**: <uv / poetry / bun / pnpm / etc.>
+
+## Common Commands
+
+```bash
+# Development
+<task-runner> <cmd>     # <description>
+
+# Testing
+<task-runner> test      # <description>
+
+# Deploy
+<task-runner> deploy    # <description>
+```
+
+## External Services
+
+<!-- Third-party services / vendors this project depends on. -->
+
+| Service | Purpose |
+|---------|---------|
+| <vendor> | <purpose> |
+
+## Tickets (Linear)
+
+Tickets live in Linear, workspace `<LINEAR_WORKSPACE>`, project `<LINEAR_PROJECT>`. Issue prefix: `<TICKET_PREFIX>-N`. The Linear Task Agent picks up tickets labelled `agent-eligible` and runs the `<RUNBOOK_COMMAND>` runbook.
+
+**Never apply `agent-eligible`** to tickets that modify the agent's own launcher (`.claude/agent-profiles/code.yaml`) or runbook (`.claude/commands/<RUNBOOK_NAME>.md`) — self-modification is a recipe for non-recoverable state.
+
+Authoring: `/new-ticket` (workspace-aware — detects this repo from cwd).
+
+## Project Memory
+
+Auto-loaded learnings/patterns from prior sessions. The MEMORY.md below is a meta-index; sibling MEMORY-reference.md and MEMORY-feedback.md (if present) are loaded selectively when relevant.
+
+@<PROJECT_MEMORY_PATH>

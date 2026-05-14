@@ -1,0 +1,32 @@
+# Code Review — <PROJECT_NAME> Reviewers
+
+Loads alongside the global `code-review-dispatch.md` (shipped via jm-workflow plugin). The global rule explains the CodeRabbit boundary: CodeRabbit owns generic code review + universal-agent territory at PR time. **This file lists the project-specific reviewers that auto-dispatch pre-commit** — they catch <PROJECT_NAME>-shaped failure modes CodeRabbit can't see.
+
+## Auto-Dispatched Reviewers
+
+<!-- Each row: an agent definition under .claude/agents/<noun>-reviewer.md plus the diff patterns that auto-trigger it.
+
+Trigger column: file globs and/or content patterns (regex/literal). Auditing column: 1-3 sentence summary of what the reviewer specifically looks for. -->
+
+| Agent | Fires when diff contains | Audits |
+|-------|--------------------------|--------|
+| `<agent-name-1>` ⭐ | `<path-pattern>`, `<content-pattern>` | <what it audits — specific failure modes, not generic concerns> |
+| `<agent-name-2>` | `<path-pattern>` | <what it audits> |
+| `<agent-name-3>` | `<content-pattern>` | <what it audits> |
+
+⭐ = highest-stakes (money loss, data integrity, silent delivery failure, security). Starred reviewers always reserve a slot when triggered.
+
+## Cap and prioritization
+
+Cap is **2 auto-dispatched reviewers per commit** (CodeRabbit covers the generic territory at PR time, so backing it up with multiple universal agents is wasted budget).
+
+When more than 2 trigger, pick by:
+1. ⭐ reviewers always win a slot
+2. Then by trigger specificity — a path-pattern match beats a content-pattern-only match (the path match means the reviewer was *built* for this surface)
+3. Then by recency of last-known incident in the touched code (operator judgment)
+
+When 0 trigger: announce skip ("no project-specific reviewers triggered — CodeRabbit will cover at PR") and move on.
+
+## Universal-agent overlap
+
+Universal agents (`silent-failure-hunter`, `concurrency-auditor`, `sentry-discipline-reviewer`, `api-contract-reviewer`, `test-gap-analyzer`, `type-design-analyzer`) do not auto-fire — CodeRabbit covers their territory at PR time. They remain available via explicit `/code-review` for pre-PR sanity checks. Project-specific reviewers should not duplicate their concerns; they may briefly flag overlap so the operator knows where to look.

@@ -1,0 +1,51 @@
+# The default profile for the autonomous Linear ticket agent. Produces a
+# draft GitHub PR. Runs the <RUNBOOK_COMMAND> runbook (project-scoped at
+# .claude/commands/<RUNBOOK_NAME>.md). This file is the source of truth
+# for which tools the agent can call during a `code` ticket; the
+# `tickets` CLI reads it when spawning `claude -p`.
+#
+# PREREQUISITE — Before this profile is usable, you must author the
+# runbook at .claude/commands/<RUNBOOK_NAME>.md. The `tickets` CLI will
+# attempt to invoke <RUNBOOK_COMMAND> when picking up an agent-eligible
+# ticket; if the command file does not exist, ticket pickup fails before
+# any work begins. Reference: ~/.claude/commands/<RUNBOOK_NAME>.md in
+# the home-lab repo (services/tickets/), or fork an existing runbook
+# from a sibling project.
+slash_command: <RUNBOOK_COMMAND>
+mcp_servers:
+  - <MCP_LINEAR_NAME>
+  - playwright
+  - context7
+allowed_tools:
+  - Read
+  - Write
+  - Edit
+  - NotebookEdit
+  - Glob
+  - Grep
+  - Bash
+  - Task
+  - Agent
+  - Skill
+  - SendMessage
+  - Monitor
+  - WebFetch
+  - WebSearch
+  - TodoWrite
+  - mcp__<MCP_LINEAR_NAME>__get_issue
+  - mcp__<MCP_LINEAR_NAME>__list_issues
+  - mcp__<MCP_LINEAR_NAME>__list_comments
+  - mcp__<MCP_LINEAR_NAME>__get_issue_status
+  - mcp__<MCP_LINEAR_NAME>__list_issue_statuses
+  - mcp__<MCP_LINEAR_NAME>__list_issue_labels
+  - mcp__<MCP_LINEAR_NAME>__get_project
+  - mcp__<MCP_LINEAR_NAME>__list_projects
+  - mcp__<MCP_LINEAR_NAME>__list_teams
+  - mcp__<MCP_LINEAR_NAME>__get_team
+  - mcp__<MCP_LINEAR_NAME>__save_comment
+  - mcp__<MCP_LINEAR_NAME>__save_issue
+  - mcp__<MCP_LINEAR_NAME>__create_attachment
+  - mcp__plugin_playwright_playwright__*
+  - mcp__context7__*
+output_verifier:
+  shape: github_pr

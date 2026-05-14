@@ -134,19 +134,22 @@ Path rewrite applied two places:
 
 - ~~`story` skill (Storybloq)~~ — **dropped** 2026-05-14: not used in personal workflow, no value to redistribute. Plugin ships no skills layer.
 
-### Templates (in `plugin/templates/`)
+### Templates — 6 shipped (JM-173 slice 7)
 
-Project-overlay scaffolds with `<PROJECT>`/`<USER>` placeholders:
+Project-overlay scaffolds in `plugin/templates/`, with `<PROJECT>`/`<USER>` placeholders for adopters to substitute. Phase 1 already shipped `tools/check-runbook-drift.sh` + `templates/git-hooks/` + `templates/ci/` for the linear-* runbook-drift workflow.
 
-- `CLAUDE.md.tmpl` — project root scaffold (header / services table / core flow / conventions / dev env / common commands / project memory pointer)
-- `project-overlay/.claude/rules/agent-conventions.md` — branch naming (agent/ vs jm/), PR base, worktree path
-- `project-overlay/.claude/rules/code-review-PROJECT.md.tmpl` — reviewer table shape
-- `project-overlay/.claude/agent-profiles/code.yaml.tmpl` — agent execution contract
-- `project-overlay/.claude/commands/linear-{work,new,status}-ticket.md.tmpl` — **canonical-plus-overlay** to fix the ~800-line drift currently in oneonme/home-lab
-- `project-overlay/.claude/skills/daily-recap/SKILL.md.tmpl`
-- `project-overlay/MEMORY.md.tmpl` — split-when-bloated meta-index pattern
+| Path | Purpose |
+|---|---|
+| `CLAUDE.md.tmpl` | Project root scaffold — services table, core flow, conventions, dev env, common commands, external services, Linear pointer, project-memory @-import |
+| `project-overlay/.claude/rules/agent-conventions.md` | Branch naming (`<AGENT_BRANCH_PREFIX>` vs `<HUMAN_BRANCH_PREFIX>`), PR base, worktree setup, agent file location, slash-command source-of-truth |
+| `project-overlay/.claude/rules/code-review-PROJECT.md.tmpl` | Reviewer table shape — auto-dispatch triggers, ⭐ priority, 2-reviewer cap, CodeRabbit-overlap rule |
+| `project-overlay/.claude/agent-profiles/code.yaml.tmpl` | Linear Task Agent execution contract — slash_command + mcp_servers + allowed_tools + output_verifier |
+| `project-overlay/.claude/skills/daily-recap/SKILL.md.tmpl` | End-of-day operator recap — git activity + Linear activity + open threads + tomorrow's lead |
+| `project-overlay/MEMORY.md.tmpl` | Split-when-bloated meta-index pattern (Project/Feedback/Reference sections; split siblings when MEMORY.md > ~24 KB) |
 
-**Drift-fix-first principle:** Apply canonical-plus-overlay to JM's own repos *before* shipping the pattern, otherwise teammates inherit the problem.
+**Item dropped:** `project-overlay/.claude/commands/linear-{work,new,status}-ticket.md.tmpl` (canonical-plus-overlay) — superseded by Phase 1's drift-test architecture decision (Option 1, see Phase 1 recon). Canonical-plus-overlay was rejected in favor of drift-test because today's drift is ~80% identifier-swap noise + small true-fork; drift-test captures visibility without changing CC's command-loader semantics.
+
+**Drift-fix-first principle:** Already satisfied by Phase 1 shipping `check-runbook-drift.sh` + pre-commit hook + CI workflow against JM's own repos.
 
 ## Install layer (Layer 2)
 

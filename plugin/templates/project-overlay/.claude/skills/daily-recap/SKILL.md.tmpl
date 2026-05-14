@@ -1,0 +1,51 @@
+---
+name: daily-recap
+description: End-of-day recap for <PROJECT_NAME>. Summarizes work shipped, tickets advanced, and open threads since the last recap.
+---
+
+# Daily Recap — <PROJECT_NAME>
+
+Invoke at end-of-day to compile a focused recap of today's work in this workspace. Output goes to the operator (you) — not Linear, not Slack.
+
+## Inputs to gather
+
+1. **Git activity** (this repo)
+   - Commits authored today (`git log --since=midnight --author="<USER>" --oneline`)
+   - PRs opened / merged / closed (`gh pr list --search "is:closed closed:>=YYYY-MM-DD author:@me"`)
+   - Branches still in progress with uncommitted work (`git worktree list` + dirty status)
+
+2. **Linear activity** (workspace: `<LINEAR_WORKSPACE>`, project: `<LINEAR_PROJECT>`)
+   - Tickets moved to `In Review` or `Done` today
+   - Tickets transitioned out of `Todo` (agent or human pickup)
+   - Comments authored today
+
+3. **Open threads from prior sessions**
+   - Any item under `## What's Next` from yesterday's recap or `/jm-retro` output
+   - Pending agent runs (background `tickets work` jobs that haven't checkpointed)
+
+## Output format
+
+```markdown
+## <Today's date>
+
+**Shipped:**
+- <PR / commit summary with link>
+- <Ticket moved to Done with `<TICKET_PREFIX>-N` reference>
+
+**Advanced:**
+- <Ticket transitioned to In Review / In Progress>
+
+**Open threads:**
+- <In-progress branch + what's left>
+- <Blocker awaiting external action>
+
+**Tomorrow's lead:**
+- <Single highest-priority next action, with the exact starting command if possible>
+```
+
+## Guardrails
+
+- Recap **today only** unless the operator specifies a wider window
+- Cite ticket IDs and PR numbers verbatim; do not summarize away identifiers
+- "Tomorrow's lead" must be a single concrete action, not a list — friction-free re-entry is the whole point
+- Do **not** publish or post the recap anywhere — it's local-only operator notes
