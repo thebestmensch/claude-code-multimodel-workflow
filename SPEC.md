@@ -89,14 +89,32 @@ Excluded: autonomous Linear ticket agent (separate package if ever shipped).
 
 **Don't ship (1):** `n8n-pattern-reviewer` (home-lab hardcoded)
 
-### Hooks — ~38 ship-able
+### Hooks — 47 scripts shipped (46 wires)
 
-Bucket counts from audit:
-- **Universal (~42):** session-init, all gate hooks (bypass-pattern-warn, pre-commit-gate, codex-*-gate, visual-qa-stop-gate, mobile-pattern-stop-gate, interaction-qa-stop-gate, devils-advocate-plan-gate, sdd-review-gate, schedule-wakeup-loop-gate, parallel-cc-worktree-gate, commit-on-drifted-branch-guard, commit-scope-check, git-push-bundled-commits-guard, backend-verification-gate), all trackers, all dispatch-trackers, cache-warmth-tracker/cache-cold-warn, lib/match-git-commit.py, lib/augment-edited-files.sh, _lib/stop-gate-emit.sh, _lib/pbcopy-bypass.sh, notify.sh (macOS-gated)
-- **Universal-with-deps (~12):** chezmoi-*-guard (chezmoi-presence-gated), codex-*-cap/gate/tracker (codex-presence-gated), tweakcc-drift-warn (tweakcc-presence-gated), gh-actions-yaml-lint, me-integrity (only fires if `~/.me/` present), agent-eligible-self-mod-check
-- **Personal/cut:** `needs-input-mark*.sh` (HUD), `creative-director-gate.sh` (home-lab globs), `event-emitter.sh` (tickets infra), `ssh-tower-python3-block.sh` (hostname), `types-drift-guard.sh` (oneonme paths)
+Slice-4 audit reclassified the original ~38 estimate. Source inventory: 57 hooks + 5 helpers in `~/.claude/hooks/`. Shipped at `plugin/hooks/scripts/`.
 
-**Path rewrite:** All absolute `/Users/jm/.claude/hooks/...` paths in `settings.json` references → `$HOME`-relative.
+**Plugin layout** (matches `dot-me`/`superpowers` precedent):
+
+```
+plugin/hooks/
+  hooks.json             — manifest, mirrors settings.json hook block
+  scripts/*.sh           — 47 hook scripts
+  scripts/_lib/*.sh      — 2 internal helpers (pbcopy-bypass, stop-gate-emit)
+  scripts/lib/*.sh       — 1 helper (augment-edited-files.sh)
+  scripts/lib/*.py       — 2 helpers (match-git-commit.py, bypass-digest.py)
+```
+
+Path rewrite applied two places:
+- `hooks.json` references hooks as `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/<name>.sh` — the harness substitutes the plugin root at registration time.
+- Internal cross-script refs that were `$HOME/.claude/hooks/lib/...` rewritten to `$(dirname "$0")/lib/...` (relative to the script's own location). 4 sites in `codex-pre-commit-gate.sh` (1 + 2), `codex-stop-gate.sh` (1), `pre-commit-gate.sh` (1).
+
+**Drop (9):** `needs-input-mark.sh` / `needs-input-mark-stop.sh` / `needs-input-clear.sh` (HUD lifecycle), `creative-director-gate.sh` (SpenschSuite globs), `event-emitter.sh` (home-lab tickets infra), `ssh-tower-python3-block.sh` + `agent-worktree-tower-block.sh` (Unraid hostname), `types-drift-guard.sh` (OneOnMe paths), `me-integrity.sh` (already shipped by `dot-me` plugin), `ota-deploy-gate.sh` (mobile-OOM personal).
+
+**Templated for redistribution (7):** `dispatch-tracker.sh` (stripped JM-103 tickets-infra block + OneOnMe-specific lensed-reviewer matchers — kept generic ones: visual-qa, code-review, brainstorm, frontend-design, devils-advocate, sentry-discipline, codex-rescue), `notify.sh` (placeholder sound path), `parallel-cc-worktree-gate.sh` (dropped JM memory file ref), `codex-pre-commit-gate.sh` (dropped JM memory ref), `gh-actions-yaml-lint.sh` (dropped Slack-notifier comment), `backend-verification-gate.sh` (`ssh tower` → `ssh <host>` example), `track-verify-commands.sh` (`ssh tower` → `ssh ` regex token).
+
+**Universal-with-deps** (graceful no-op when tool absent): `chezmoi-*-guard` (3 hooks; `command -v chezmoi || exit 0`), `codex-*-{cap,gate,tracker}` (4 hooks), `tweakcc-drift-warn`, `gh-actions-yaml-lint`, `agent-eligible-self-mod-check` (matches `mcp__linear__save_issue` only).
+
+**Wired but not in JM's settings.json (4 added):** `commit-scope-check.sh` (PreToolUse Bash), `commit-gate-cleanup.sh` (PostToolUse Bash), `devils-advocate-plan-gate.sh` (PreToolUse ExitPlanMode), `devils-advocate-plan-cleanup.sh` (PostToolUse ExitPlanMode). Useful patterns for adopters.
 
 ### Rules — 5 ship-able
 
