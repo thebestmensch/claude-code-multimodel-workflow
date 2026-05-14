@@ -95,11 +95,16 @@ fi
 filter_and_emit() {
   while IFS= read -r -d '' path; do
     [ -z "$path" ] && continue
+    # Skip directory entries — `git ls-files --others` reports untracked dirs
+    # (registered worktrees under .claude/worktrees/, vendor caches, etc.) with
+    # a trailing slash. They're not files-to-review; they're false positives.
     case "$path" in
+      */) continue ;;
       *.md|*.json|*.yml|*.yaml|*.toml|*.txt|*.csv|*.lock) continue ;;
     esac
     abs_path="$repo_root/$path"
-    if [ "$apply_mtime_filter" = "1" ] && [ -e "$abs_path" ]; then
+    [ -d "$abs_path" ] && continue
+    if [ "$apply_mtime_filter" = "1" ] && [ -f "$abs_path" ]; then
       if [ ! "$abs_path" -nt "$session_start_marker" ]; then
         continue
       fi
