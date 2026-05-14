@@ -70,10 +70,21 @@ emit_stop_block_dedupe() {
   fi
 
   if [ "$state_hash" = "$last_hash" ]; then
-    # Same blocked state already emitted this session; suppress to break the
-    # idle Stop-loop. The model has the original message in context; a fresh
-    # repeat adds nothing.
-    exit 0
+    # Same state already emitted this session. The full block payload is in
+    # model context; re-emitting it on every Stop bloats context for no
+    # signal gain. Emit a SHORT reference payload that still carries
+    # {decision:"block"} so the gate stays effective.
+    #
+    # Why short-emit instead of `exit 0`: a silent exit lets the next Stop
+    # proceed (gate bypassed) when the model never received the original
+    # block message — e.g. after context compaction evicts it. Always
+    # emitting block closes that bypass (Codex slice-4 H1, 2026-05-14). The
+    # precompact-clear-stop-gate-dedupe.sh hook complements this by wiping
+    # the marker on compaction, so the first Stop AFTER compaction re-emits
+    # the FULL payload instead of a reference that points at a now-evicted
+    # prior message.
+    emit_stop_block "[Stop-gate still blocked — see prior ${hook_name} message in this session for details and bypass instructions.]"
+    return
   fi
 
   mkdir -p "$gate_dir" 2>/dev/null || true
