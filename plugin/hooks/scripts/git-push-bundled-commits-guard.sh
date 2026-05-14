@@ -58,12 +58,22 @@ if [ -n "$session_id" ] && [ -f "/tmp/cc-gates/$session_id/skip_push_bundle_chec
   exit 0
 fi
 
-# Token-level match — `git push` must be ADJACENT argv tokens, not a substring
-# inside a quoted argument to printf/echo/cat/etc. shlex.split respects shell
-# quoting so `printf '... git push ...'` is one token (the quoted string),
-# not three. Only fires when git+push are actual command words.
+# Token-level match — `git push` must be the resolved command-words, not a
+# substring inside a quoted argument to printf/echo/cat/etc. shlex.split
+# respects shell quoting so `printf '... git push ...'` is one token (the
+# quoted string), not three.
+#
+# Handles real-world git invocations:
+#   git push                      — bare
+#   /usr/bin/git push             — absolute path (basename comparison)
+#   command git push / env git push — leading non-git tokens are skipped by
+#                                     the outer loop (which only triggers on
+#                                     the git basename), so these match via
+#                                     the inner git push token pair
+#   git -C <repo> push            — pre-subcommand flags (some take args) are
+#                                   skipped before checking for `push`
 matches=$(printf '%s' "$command" | /usr/bin/python3 -c '
-import shlex, sys
+import os, shlex, sys
 cmd = sys.stdin.read()
 try:
     tokens = shlex.split(cmd, posix=True, comments=False)
@@ -71,9 +81,33 @@ except ValueError:
     # Unbalanced quotes — fall back to NO match (avoid false positives on
     # malformed commands, which are usually quote-juggling shell tricks).
     sys.exit(0)
-for i in range(len(tokens) - 1):
-    if tokens[i] == "git" and tokens[i+1] == "push":
-        print("match")
+
+# Git options that consume the NEXT token as their argument. Listed from
+# git(1) — anything between `git` and the subcommand we need to skip past.
+ARG_OPTS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace",
+            "--super-prefix", "--exec-path", "--literal-pathspecs"}
+
+for i, tok in enumerate(tokens):
+    if os.path.basename(tok) != "git":
+        continue
+    # Found a `git`-shaped invocation. Walk forward through pre-subcommand
+    # flags to locate the actual subcommand token.
+    j = i + 1
+    while j < len(tokens):
+        t = tokens[j]
+        if t in ARG_OPTS:
+            j += 2
+            continue
+        if t.startswith("--") and "=" in t:
+            j += 1
+            continue
+        if t.startswith("-"):
+            j += 1
+            continue
+        # Non-flag token reached — this is the subcommand.
+        if t == "push":
+            print("match")
+            sys.exit(0)
         break
 ' 2>/dev/null)
 [ "$matches" != "match" ] && exit 0
