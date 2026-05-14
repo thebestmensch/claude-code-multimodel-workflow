@@ -73,13 +73,21 @@ Excluded: autonomous Linear ticket agent (separate package if ever shipped).
 
 ## Plugin contents (Layer 1)
 
-### Commands — 21 ship-able
+### Commands — 9 ship-able
 
-**Ship as-is (5):** `agent-grep`, `code-review`, `accessibility-qa`, `tone-qa`, `visual-qa`
+Slice-3 audit reclassified the original 21-ship plan: actual personal `~/.claude/commands/` inventory is 37 files, of which most are tightly coupled to JM's home-lab or OneOnMe stack (Heroku/Django/Maestro/menu_sql/core_appversionconfig/oom-/menu-) and not redistributable.
 
-**Templated (16, `jm-` prefix stripped):** `account`, `catchup`, `color-options`, `commit`, `devils-advocate`, `meta-command`, `meta-generate`, `plugin-audit`, `research`, `research-claude`, `spincraft`, `watch-pr`, `bypass-audit`, `interaction-qa`, `teams`, (1 reserved)
+**Ship as-is (6 universal):** `agent-grep`, `code-review` (default range tightened to follow what's staged so a pre-commit review actually covers the committed diff), `accessibility-qa`, `tone-qa`, `visual-qa`, `teams` (`disable-model-invocation: true`; user-invoke only because it spawns coordinated agents across services). All seven model-invocable QA/discovery commands carry a `description:` so Claude can decide to dispatch them.
 
-**Don't ship (4 personal):** `jm-email`, `jm-retro`, `jm-voice`, `me` (already shipped via `dot-me` plugin)
+**Templated (3, `jm-`/coupling stripped):** `commit` (renamed from `jm-commit`; scope examples generalized; toolchain step made stack-neutral; `disable-model-invocation: true` because the workflow performs a `git commit`), `devils-advocate` (renamed from `jm-devils-advocate`; depends on the `devils-advocate` agent shipped in slice 2 — adopters install the assembled plugin so the cross-slice dependency is dev-time only), `interaction-qa` (OOM bundle ID example replaced; philosophy lookup switched from `~/.claude/docs/` to project-local `.claude/docs/` with rules fallback)
+
+**Don't ship (28):**
+- 14 personal `jm-*`: `jm-account`, `jm-catchup`, `jm-color-options`, `jm-email`, `jm-linear-promote-tbd`, `jm-meta-command`, `jm-meta-generate`, `jm-plugin-audit`, `jm-research`, `jm-research-claude`, `jm-retro`, `jm-spincraft`, `jm-voice`, `jm-watch-pr`
+- 1 personal: `me` (shipped via `dot-me` plugin)
+- 3 OneOnMe-specific: `oom-linear-promote-tbd`, `oom-teams`, `oom-visual-qa`
+- 3 home-lab menu-service: `menu-agent-auth`, `menu-agent-status`, `menu-import`
+- 6 OneOnMe stack-coupled: `deploy` (Heroku/Django), `run-e2e` (Maestro), `release-notes` (OOM app stores), `update-app-versions` (OOM Django table), `investor-update` (OOM data sources), `make-tests` (Django-specific patterns)
+- 1 deferred to slice 4: `bypass-audit` (depends on `~/.claude/hooks/lib/bypass-digest.py`; ship in hooks slice)
 
 ### Agents — 11 ship-able
 
