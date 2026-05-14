@@ -83,9 +83,9 @@ Excluded: autonomous Linear ticket agent (separate package if ever shipped).
 
 ### Agents — 11 ship-able
 
-**Ship as-is (9 universal):** `silent-failure-hunter`, `test-gap-analyzer`, `type-design-analyzer`, `concurrency-auditor`, `api-contract-reviewer`, `sentry-discipline-reviewer`, `security-reviewer`, `devils-advocate`, `research-agent`
+**Ship as-is (8 universal):** `silent-failure-hunter`, `test-gap-analyzer`, `type-design-analyzer`, `concurrency-auditor`, `api-contract-reviewer`, `sentry-discipline-reviewer`, `devils-advocate`, `research-agent`
 
-**Templated (2):** `homelab-explorer` (rename, generalize), `n8n-patcher`
+**Templated / generalized (3):** `homelab-explorer` → renamed to `repo-explorer` (drop homelab path bake-in, keep concise read-only exploration contract); `n8n-patcher` (drop Unraid / SSH / `/mnt/user` specifics, keep the n8n SQLite three-table mechanics that are the agent's value); `security-reviewer` (drop "homelab running FastAPI services with Google OAuth" project-specific opening line, keep generic OWASP-shaped review focus areas adopters can apply to any stack).
 
 **Don't ship (1):** `n8n-pattern-reviewer` (home-lab hardcoded)
 
