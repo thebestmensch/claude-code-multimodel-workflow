@@ -104,9 +104,9 @@ Bucket counts from audit:
 
 **Don't ship:** `workspace-layout.md` (jm/oom tmux session names)
 
-### Skills
+### Skills — none
 
-- `story` skill (Storybloq) — ship as-is, clean
+- ~~`story` skill (Storybloq)~~ — **dropped** 2026-05-14: not used in personal workflow, no value to redistribute. Plugin ships no skills layer.
 
 ### Templates (in `plugin/templates/`)
 
