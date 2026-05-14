@@ -48,8 +48,18 @@ edited_file="$gate_dir/edited_files"
 #              alone misses them). Worktree mode also picks up untracked
 #              files created by generators / `tee > new.py`.
 # Filter rules match track-edited-files.sh in both modes.
-"$(dirname "$0")/lib/augment-edited-files.sh" "$gate_dir" cached
-"$(dirname "$0")/lib/augment-edited-files.sh" "$gate_dir" worktree
+#
+# Repo discovery: the augmenter uses its own cwd to find the repo. When the
+# user's bash command is `cd X && git commit` or `git -C X commit`, the
+# augmenter inherits the HARNESS cwd (not the bash subprocess's cwd) and
+# evaluates the wrong repo — empty staged diff → silent gate bypass. Extract
+# the target repo from $command and cd into it before invoking the augmenter.
+# Defaults to $PWD when the command has neither `cd` nor `-C` (the original
+# behavior). Closes Codex slice-4 H2 finding.
+repo_dir=$(/usr/bin/python3 "$(dirname "$0")/lib/extract-git-repo-dir.py" "$command")
+repo_dir="${repo_dir:-$PWD}"
+(cd "$repo_dir" 2>/dev/null && "$(dirname "$0")/lib/augment-edited-files.sh" "$gate_dir" cached)
+(cd "$repo_dir" 2>/dev/null && "$(dirname "$0")/lib/augment-edited-files.sh" "$gate_dir" worktree)
 
 [ -f "$edited_file" ] || exit 0
 
