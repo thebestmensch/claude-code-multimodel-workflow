@@ -53,25 +53,34 @@ If you can't fit the reason in one sentence, the reason isn't real — pick adve
 
 ## How to Dispatch
 
-Two invocation paths, both model-callable (the `/codex:*` slash commands have `disable-model-invocation: true` and only the human can type them):
+Two invocation paths, both model-callable (the `/codex:*` slash commands have `disable-model-invocation: true` and only the human can type them).
 
 ### Background diff review (preferred)
 
-> **Path note:** the `codex/*/scripts/...` segment is an unquoted glob — the shell expands it to the installed plugin version. Do NOT wrap the whole path in double quotes; that prevents glob expansion and makes the command fail silently while the bash tracker still sees a "codex-companion.mjs review" substring and falsely marks dispatch.
+This plugin ships a wrapper at `plugin/tools/codex-dispatch.sh` that bakes in pre-flight git hygiene (gaps #5 + #6) and hang-bail polling (gap #7) so the operator stops carrying those gaps in their head:
+
+```bash
+$HOME/.claude/plugins/cache/jm-workflow/*/plugin/tools/codex-dispatch.sh adversarial-review        # blocks until result, auto hang-bail at 4.5 min silent log
+$HOME/.claude/plugins/cache/jm-workflow/*/plugin/tools/codex-dispatch.sh review                    # downgrade
+$HOME/.claude/plugins/cache/jm-workflow/*/plugin/tools/codex-dispatch.sh --no-wait adversarial-review  # background only
+$HOME/.claude/plugins/cache/jm-workflow/*/plugin/tools/codex-dispatch.sh status                    # passthrough
+$HOME/.claude/plugins/cache/jm-workflow/*/plugin/tools/codex-dispatch.sh result                    # passthrough
+$HOME/.claude/plugins/cache/jm-workflow/*/plugin/tools/codex-dispatch.sh cancel <job-id>           # passthrough
+```
+
+Tip: the unquoted `cache/jm-workflow/*/` glob expands to the installed plugin version. Operators who want a shorter alias can `ln -s` the resolved path to `~/.claude/codex-dispatch.sh`.
+
+Exit codes: 0 review completed (result printed), 2 pre-flight failure, 3 hang-bail fired (write bypass with completed-review evidence per the suggested template the script emits).
+
+**Operator-side gaps the wrapper does NOT close** — still your responsibility before invocation:
+- `cd` into the repo whose diff you want reviewed (gap #3)
+- Do not `git commit` before dispatch (gap #4)
+- If the gate fires after `git add` even though a review already completed: bypass with completed-review evidence; do not re-dispatch (gap #8)
+
+**Raw companion fallback** — only if the wrapper is unavailable (mid-bootstrap, plugin cache wiped, etc.). The `codex/*/scripts/...` segment is an unquoted glob; do NOT wrap the whole path in double quotes (that prevents expansion and silently no-ops while the bash tracker still sees the substring and falsely marks dispatch):
 
 ```bash
 node $HOME/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs adversarial-review --background
-```
-
-Or for downgrade:
-
-```bash
-node $HOME/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs review --background
-```
-
-After dispatch, retrieve with:
-
-```bash
 node $HOME/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs status
 node $HOME/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs result
 ```
@@ -142,9 +151,13 @@ The `codex-stop-gate.sh` hook enforces "Codex diff dispatch happened" only for f
 
 4. **Dispatch BEFORE committing, not after.** `codex-companion.mjs` resolves the diff against the working tree (`git diff`, not `git diff HEAD~1..HEAD`). If you commit and then dispatch, Codex sees only any *other* uncommitted work in the tree — your actual changes are invisible because they're already in HEAD. Symptoms: Codex returns findings on files you didn't touch this session, or returns "no diff" entirely. Recovery: dispatch before `git commit`, or after committing pass an explicit revision range or scope the review by file path so Codex re-reads the committed change. The companion's job tracker treats the result as "review landed" regardless of which diff was actually evaluated, so silently shipping unreviewed work is the failure mode.
 
-5. **Staged but uncommitted changes are also invisible.** `git diff` shows only working-tree changes; `git diff --cached` shows staged ones. If you `git add` and *then* dispatch (e.g. because the pre-commit gate forced you to retry), Codex reads an empty diff and silently approves. Symptom: instant `approve` verdict with "No material findings" on what should be a substantial diff. Recovery: `git restore --staged <files>` to move the diff back into the working tree, dispatch, then re-stage after the result lands. Don't take a fast `approve` on a non-trivial diff at face value — verify the result mentions specific files you changed.
+5. **Staged but uncommitted changes are also invisible.** *(Auto-closed by `plugin/tools/codex-dispatch.sh` — `git restore --staged`s before dispatch. Raw-companion fallback still hits this.)* `git diff` shows only working-tree changes; `git diff --cached` shows staged ones. If you `git add` and *then* dispatch (e.g. because the pre-commit gate forced you to retry), Codex reads an empty diff and silently approves. Symptom: instant `approve` verdict with "No material findings" on what should be a substantial diff. Recovery: `git restore --staged <files>` to move the diff back into the working tree, dispatch, then re-stage after the result lands. Don't take a fast `approve` on a non-trivial diff at face value — verify the result mentions specific files you changed.
 
-6. **Hung jobs: bail-fast at ~5min of silent log, don't retry the same diff.** `codex-companion.mjs status` showing `phase: verifying` for many minutes while the log file stops growing (`wc -l` stable across checks) is a deterministic hang, not a transient slowdown — the same input reproduces it. Recovery: `node …/codex-companion.mjs cancel <jobId>`, then write a bypass invoking the "API unavailable" clause AND a second sentence naming the actual review evidence on this diff (regression tests passing, mirrors a documented pattern, low-blast-radius surface — at least one concrete claim, not "I reviewed it myself"). **Two cancelled attempts is the cap *per diff*.** A third try on the same diff wastes the same ~10–12min and produces the same hang. The cap resets when the diff changes substantively — a fresh diff with new logic deserves a fresh attempt, since the hang correlates with specific input shape, not with Codex's general availability.
+6. **Untracked (new) files are invisible to `git diff` — `git add -N` before dispatch.** *(Auto-closed by `plugin/tools/codex-dispatch.sh` — marks untracked paths intent-to-add, with nested-`.git` exclusion so worktrees/submodules aren't swept into the review path. Raw-companion fallback still hits this.)* `git diff` only shows changes to *tracked* files; untracked files are listed by `git status` but not included in the diff. If a slice introduces N new files, Codex will review only the modified-tracked subset and silently miss the new files entirely. Recovery: `git add -N <new-paths>` (intent-to-add) makes new files appear in `git diff` with their full content as additions, *without* staging them — so this stays compatible with gap #5. Symptom of skipping this: Codex returns a small diff stat (e.g. 4 files / 6 lines) when the actual slice scope is much larger (e.g. 12 files / 1000+ lines).
+
+7. **Hung jobs: bail-fast at ~5min of silent log, don't retry the same diff.** *(Auto-closed by `plugin/tools/codex-dispatch.sh` — polls every 90s, cancels the job + emits a bypass template after 3 consecutive verifying-phase polls with stable log size. Raw-companion fallback still requires manual polling.)* `codex-companion.mjs status` showing `phase: verifying` for many minutes while the log file stops growing (`wc -l` stable across checks) is a deterministic hang, not a transient slowdown — the same input reproduces it. Recovery: `node …/codex-companion.mjs cancel <jobId>`, then write a bypass invoking the "API unavailable" clause AND a second sentence naming the actual review evidence on this diff (regression tests passing, mirrors a documented pattern, low-blast-radius surface — at least one concrete claim, not "I reviewed it myself"). **Two cancelled attempts is the cap *per diff*.** A third try on the same diff wastes the same ~10–12min and produces the same hang. The cap resets when the diff changes substantively — a fresh diff with new logic deserves a fresh attempt, since the hang correlates with specific input shape, not with Codex's general availability.
+
+8. **A completed review on the unstaged diff does NOT satisfy the gate once you `git add`.** The pre-commit + stop-gate hooks track whether a dispatch covered the currently-staged file set, not whether *some* review completed this session. Staging files after a successful adversarial-review (or `git restore --staged` + re-stage cycle) re-invalidates the gate's "covered" state even though the review evidence is sitting in `codex-companion.mjs result`. Symptom: gate fires with "results have not been retrieved into context" immediately after `git add`, even right after you fetched the result. Recovery: write a bypass citing the completed review — DO NOT re-dispatch. The "right answer to a stuck gate is bypass + existing evidence" rule supersedes the "always dispatch" default once a review has already happened on this diff.
 
 A future iteration may close these gaps via a SessionStart-baselined augmenter. The naive `git status --porcelain` augmenter doesn't work — it false-positives on pre-existing dirty work that the session didn't touch (validated empirically; see this rule's revision history).
 
