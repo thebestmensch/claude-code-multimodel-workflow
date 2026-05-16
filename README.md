@@ -40,6 +40,7 @@ git pull
 ## Documentation
 
 - [SPEC.md](./SPEC.md) — full specification, three-layer model, tier breakdown, decision log
+- [docs/workflow.html](./docs/workflow.html) — visual flowchart of the end-to-end workflow (ticket → retro)
 - [CHANGELOG.md](./CHANGELOG.md) — release history
 
 ## Not in scope

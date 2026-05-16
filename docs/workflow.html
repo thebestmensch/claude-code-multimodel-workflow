@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JM's Claude Code Workflow — Flowchart</title>
+<style>
+  :root {
+    --bg: #0e1116;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --line: #30363d;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  .page { max-width: 1400px; margin: 0 auto; padding: 28px 20px 60px; }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); margin-bottom: 18px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px;
+    padding: 10px 14px; background: #161b22; border: 1px solid var(--line);
+    border-radius: 10px; margin-bottom: 20px; }
+  .legend .item { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; }
+  svg { display: block; width: 100%; height: auto; background: var(--bg); }
+  footer { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 12px; max-width: 880px; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>JM's Claude Code Workflow</h1>
+  <div class="sub">Flowchart — ticket to memory. Hooks (red hexagons) sit inline on the spine and must clear before forward progress; reject = red retry loop back to prior step. Sidecars branch off and rejoin.</div>
+
+  <div class="legend">
+    <span class="item"><span class="sw" style="background:#1f6feb"></span> intake / terminal</span>
+    <span class="item"><span class="sw" style="background:#388bfd"></span> /command — JM types it</span>
+    <span class="item"><span class="sw" style="background:#39c5d4"></span> /command — Claude auto-invokes</span>
+    <span class="item"><span class="sw" style="background:#a371f7"></span> skill — Claude-invoked</span>
+    <span class="item"><span class="sw" style="background:#238636"></span> subagent (background)</span>
+    <span class="item"><span class="sw" style="background:#bf8700"></span> external service</span>
+    <span class="item"><span class="sw" style="background:#da3633"></span> hook gate (must clear)</span>
+    <span class="item"><span class="sw" style="background:transparent;border:1px dashed #c9d1d9"></span> outcome (not invoked)</span>
+  </div>
+
+<svg viewBox="0 0 1400 1980" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="workflowTitle workflowDesc" font-family="-apple-system, BlinkMacSystemFont, system-ui, sans-serif" font-size="13">
+  <title id="workflowTitle">JM's Claude Code Workflow flowchart</title>
+  <desc id="workflowDesc">End-to-end workflow from task intake through planning, build, verification, ship, wrap, memory write, and cross-session compact loop.</desc>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/>
+    </marker>
+    <marker id="arrR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#da3633"/>
+    </marker>
+    <marker id="arrG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#bf8700"/>
+    </marker>
+    <style>
+      .node { stroke-width: 1.5; }
+      .lbl  { fill: #e6edf3; text-anchor: middle; }
+      .lbl-sm { fill: #c9d1d9; text-anchor: middle; font-size: 11px; }
+      .lbl-muted { fill: #8b949e; text-anchor: middle; font-size: 11px; }
+      .lbl-retry { fill: #da3633; text-anchor: middle; font-size: 10px; font-style: italic; }
+      .start  { fill: #1f6feb22; stroke: #1f6feb; }
+      .end    { fill: transparent; stroke: #c9d1d9; stroke-dasharray: 4 3; }
+      .skill  { fill: #a371f722; stroke: #a371f7; }
+      .cmd    { fill: #388bfd22; stroke: #388bfd; }
+      .autocmd{ fill: #39c5d422; stroke: #39c5d4; }
+      .agent  { fill: #23863622; stroke: #238636; }
+      .ext    { fill: #bf870022; stroke: #bf8700; }
+      .hook   { fill: #da363322; stroke: #da3633; }
+      .decision { fill: #1f6feb22; stroke: #1f6feb; }
+      .edge   { fill: none; stroke: #8b949e; stroke-width: 1.5; }
+      .edge-retry { fill: none; stroke: #da3633; stroke-width: 1.5; stroke-dasharray: 5 4; }
+      .edge-loop { fill: none; stroke: #bf8700; stroke-width: 1.5; stroke-dasharray: 5 4; }
+      .edge-side { fill: none; stroke: #8b949e; stroke-width: 1.5; stroke-dasharray: 3 3; }
+      .edge-auto { fill: none; stroke: #c9d1d9; stroke-width: 1; stroke-dasharray: 2 3; }
+      .stage-lbl { fill: #8b949e; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+    </style>
+  </defs>
+
+  <!-- Stage gutter -->
+  <text x="40"  y="80"   class="stage-lbl">1 · Intake</text>
+  <text x="40"  y="340"  class="stage-lbl">2 · Plan</text>
+  <text x="40"  y="660"  class="stage-lbl">3 · Build</text>
+  <text x="40"  y="930"  class="stage-lbl">4 · Verify</text>
+  <text x="40"  y="1310" class="stage-lbl">5 · Ship</text>
+  <text x="40"  y="1620" class="stage-lbl">6 · Wrap</text>
+  <line x1="180" y1="40" x2="180" y2="1950" stroke="#30363d" stroke-dasharray="2 4"/>
+
+  <!-- ============= 1. INTAKE ============= -->
+  <ellipse cx="700" cy="90" rx="170" ry="36" class="node start"/>
+  <text x="700" y="82"  class="lbl" font-weight="600">Task input</text>
+  <text x="700" y="100" class="lbl-sm">ticket / question / "dispatch agent"</text>
+
+  <!-- GATE: investigate-before-acting cy=200 -->
+  <polygon points="620,200 640,180 760,180 780,200 760,220 640,220" class="node hook"/>
+  <text x="700" y="196" class="lbl-sm" font-weight="600">HOOK</text>
+  <text x="700" y="210" class="lbl-sm">investigate-before-acting</text>
+  <path d="M700,134 V180" class="edge" marker-end="url(#arr)"/>
+  <path d="M620,200 L500,200 L500,90 C500,75 540,70 580,75" class="edge-retry" marker-end="url(#arrR)"/>
+  <text x="486" y="155" class="lbl-retry" transform="rotate(-90 486 155)">retry: more recon</text>
+
+  <!-- ============= 2. PLAN ============= -->
+  <rect x="560" y="310" width="280" height="60" rx="8" class="node skill"/>
+  <text x="700" y="333" class="lbl"><tspan font-weight="600">superpowers:brainstorming</tspan></text>
+  <text x="700" y="350" class="lbl-sm">align intent before code</text>
+  <path d="M700,220 V310" class="edge" marker-end="url(#arr)"/>
+
+  <rect x="220" y="310" width="220" height="60" rx="8" class="node agent"/>
+  <text x="330" y="333" class="lbl"><tspan font-weight="600">research-agent</tspan></text>
+  <text x="330" y="350" class="lbl-sm">deep tool / library eval (bg)</text>
+  <path d="M560,340 H440" class="edge" marker-end="url(#arr)"/>
+  <path d="M440,360 C520,360 540,400 700,400" class="edge-side" marker-end="url(#arr)"/>
+
+  <rect x="960" y="310" width="220" height="60" rx="8" class="node agent"/>
+  <text x="1070" y="333" class="lbl"><tspan font-weight="600">devils-advocate</tspan></text>
+  <text x="1070" y="350" class="lbl-sm">challenge design (bg)</text>
+  <path d="M840,340 H960" class="edge" marker-end="url(#arr)"/>
+  <path d="M960,360 C880,360 860,400 700,400" class="edge-side" marker-end="url(#arr)"/>
+
+  <rect x="560" y="430" width="280" height="60" rx="8" class="node skill"/>
+  <text x="700" y="453" class="lbl"><tspan font-weight="600">superpowers:writing-plans</tspan></text>
+  <text x="700" y="470" class="lbl-sm">spec for multi-step task</text>
+  <path d="M700,370 V430" class="edge" marker-end="url(#arr)"/>
+
+  <!-- GATE: brainstorm-nudge / plan-gate cy=525 -->
+  <polygon points="620,525 640,505 760,505 780,525 760,545 640,545" class="node hook"/>
+  <text x="700" y="521" class="lbl-sm" font-weight="600">HOOK</text>
+  <text x="700" y="535" class="lbl-sm">brainstorm-nudge, plan-gate</text>
+  <path d="M700,490 V505" class="edge" marker-end="url(#arr)"/>
+  <path d="M620,525 L500,525 L500,460 L560,460" class="edge-retry" marker-end="url(#arrR)"/>
+  <text x="486" y="490" class="lbl-retry" transform="rotate(-90 486 490)">retry</text>
+
+  <!-- ============= 3. BUILD ============= -->
+  <rect x="560" y="585" width="280" height="60" rx="8" class="node skill"/>
+  <text x="700" y="608" class="lbl"><tspan font-weight="600">superpowers:test-driven-development</tspan></text>
+  <text x="700" y="625" class="lbl-sm">red → green → refactor</text>
+  <path d="M700,545 V585" class="edge" marker-end="url(#arr)"/>
+
+  <rect x="560" y="685" width="280" height="70" rx="8" class="node skill"/>
+  <text x="700" y="708" class="lbl"><tspan font-weight="600">executing-plans /</tspan></text>
+  <text x="700" y="725" class="lbl"><tspan font-weight="600">subagent-driven-development</tspan></text>
+  <text x="700" y="745" class="lbl-sm">dispatch with isolation:"worktree"</text>
+  <path d="M700,645 V685" class="edge" marker-end="url(#arr)"/>
+
+  <rect x="960" y="685" width="220" height="70" rx="8" class="node agent"/>
+  <text x="1070" y="708" class="lbl"><tspan font-weight="600">implementer agents</tspan></text>
+  <text x="1070" y="725" class="lbl-sm">general-purpose, Explore,</text>
+  <text x="1070" y="741" class="lbl-sm">cavecrew-*, codex-rescue</text>
+  <path d="M840,720 H960" class="edge" marker-end="url(#arr)"/>
+  <path d="M960,750 C880,760 860,790 700,790" class="edge-side" marker-end="url(#arr)"/>
+
+  <!-- GATE: agent-worktree-tower-block cy=805 -->
+  <polygon points="620,805 640,785 760,785 780,805 760,825 640,825" class="node hook"/>
+  <text x="700" y="801" class="lbl-sm" font-weight="600">HOOK</text>
+  <text x="700" y="815" class="lbl-sm">agent-worktree-tower-block</text>
+  <path d="M700,755 V785" class="edge" marker-end="url(#arr)"/>
+  <path d="M620,805 L500,805 L500,720 L560,720" class="edge-retry" marker-end="url(#arrR)"/>
+  <text x="486" y="765" class="lbl-retry" transform="rotate(-90 486 765)">retry w/ worktree</text>
+
+  <!-- ============= 4. VERIFY ============= -->
+  <rect x="560" y="870" width="280" height="60" rx="8" class="node skill"/>
+  <text x="700" y="893" class="lbl"><tspan font-weight="600">verification-before-completion</tspan></text>
+  <text x="700" y="910" class="lbl-sm">run it, check output</text>
+  <path d="M700,825 V870" class="edge" marker-end="url(#arr)"/>
+
+  <rect x="560" y="970" width="280" height="60" rx="8" class="node autocmd"/>
+  <text x="700" y="993" class="lbl"><tspan font-weight="600">/code-review</tspan></text>
+  <text x="700" y="1010" class="lbl-sm">lensed: security, data-integrity, …</text>
+  <path d="M700,930 V970" class="edge" marker-end="url(#arr)"/>
+
+  <!-- UI branch (auto) -->
+  <rect x="220" y="970" width="220" height="40" rx="8" class="node autocmd"/>
+  <text x="330" y="995" class="lbl"><tspan font-weight="600">/visual-qa</tspan></text>
+  <rect x="220" y="1020" width="220" height="40" rx="8" class="node autocmd"/>
+  <text x="330" y="1045" class="lbl"><tspan font-weight="600">/accessibility-qa</tspan></text>
+  <rect x="220" y="1070" width="220" height="40" rx="8" class="node autocmd"/>
+  <text x="330" y="1095" class="lbl"><tspan font-weight="600">/tone-qa</tspan></text>
+  <text x="330" y="955" class="lbl-muted">if UI changed</text>
+  <path d="M560,1000 H440" class="edge" marker-end="url(#arr)"/>
+  <path d="M330,1010 V1020" class="edge"/>
+  <path d="M330,1060 V1070" class="edge"/>
+  <path d="M330,1110 C330,1170 500,1180 700,1180" class="edge-side" marker-end="url(#arr)"/>
+
+  <!-- GATE: codex-stop-gate cy=1075 -->
+  <polygon points="620,1075 640,1055 760,1055 780,1075 760,1095 640,1095" class="node hook"/>
+  <text x="700" y="1071" class="lbl-sm" font-weight="600">HOOK</text>
+  <text x="700" y="1085" class="lbl-sm">codex-stop-gate</text>
+  <path d="M700,1030 V1055" class="edge" marker-end="url(#arr)"/>
+  <path d="M620,1075 L500,1075 L500,1000 L560,1000" class="edge-retry" marker-end="url(#arrR)"/>
+  <text x="486" y="1040" class="lbl-retry" transform="rotate(-90 486 1040)">retry: address findings</text>
+  <path d="M780,1075 C900,1075 900,1260 840,1260" class="edge-side" marker-end="url(#arr)"/>
+  <text x="920" y="1170" class="lbl-muted" font-size="10" font-style="italic">bypass:</text>
+  <text x="920" y="1183" class="lbl-muted" font-size="10" font-style="italic">written reason</text>
+
+  <rect x="560" y="1140" width="280" height="60" rx="8" class="node agent"/>
+  <text x="700" y="1163" class="lbl"><tspan font-weight="600">Codex adversarial-review</tspan></text>
+  <text x="700" y="1180" class="lbl-sm">cross-provider (GPT-5.x), non-overlap signal</text>
+  <path d="M700,1095 V1140" class="edge" marker-end="url(#arr)"/>
+
+  <!-- ============= 5. SHIP ============= -->
+  <rect x="560" y="1240" width="280" height="60" rx="8" class="node autocmd"/>
+  <text x="700" y="1263" class="lbl"><tspan font-weight="600">/jm-commit</tspan></text>
+  <text x="700" y="1280" class="lbl-sm">Conventional Commits</text>
+  <path d="M700,1200 V1240" class="edge" marker-end="url(#arr)"/>
+
+  <!-- GATE: codex-pre-commit-gate, commit-scope-check cy=1345 -->
+  <polygon points="620,1345 640,1325 760,1325 780,1345 760,1365 640,1365" class="node hook"/>
+  <text x="700" y="1341" class="lbl-sm" font-weight="600">HOOK</text>
+  <text x="700" y="1355" class="lbl-sm">pre-commit-gate, scope-check</text>
+  <path d="M700,1300 V1325" class="edge" marker-end="url(#arr)"/>
+  <path d="M620,1345 L500,1345 L500,1270 L560,1270" class="edge-retry" marker-end="url(#arrR)"/>
+  <text x="486" y="1310" class="lbl-retry" transform="rotate(-90 486 1310)">retry</text>
+  <path d="M780,1345 C880,1345 880,1430 840,1430" class="edge-side" marker-end="url(#arr)"/>
+  <text x="900" y="1383" class="lbl-muted" font-size="10" font-style="italic">bypass:</text>
+  <text x="900" y="1396" class="lbl-muted" font-size="10" font-style="italic">written reason</text>
+
+  <rect x="560" y="1410" width="280" height="60" rx="8" class="node cmd"/>
+  <text x="700" y="1433" class="lbl"><tspan font-weight="600">/jm-pr</tspan></text>
+  <text x="700" y="1450" class="lbl-sm">push, open PR, drive to green</text>
+  <path d="M700,1365 V1410" class="edge" marker-end="url(#arr)"/>
+
+  <rect x="960" y="1410" width="220" height="60" rx="8" class="node ext"/>
+  <text x="1070" y="1433" class="lbl"><tspan font-weight="600">CodeRabbit</tspan></text>
+  <text x="1070" y="1450" class="lbl-sm">PR review (external)</text>
+  <path d="M840,1440 H960" class="edge" marker-end="url(#arr)"/>
+  <path d="M1070,1470 C1070,1510 900,1510 840,1470" class="edge-loop" marker-end="url(#arrG)"/>
+  <text x="950" y="1525" class="lbl-muted">iterate until green</text>
+
+  <rect x="220" y="1410" width="220" height="28" rx="8" class="node cmd"/>
+  <text x="330" y="1428" class="lbl"><tspan font-weight="600">/release-notes</tspan></text>
+  <rect x="220" y="1444" width="220" height="28" rx="8" class="node cmd"/>
+  <text x="330" y="1462" class="lbl"><tspan font-weight="600">/update-app-versions</tspan></text>
+  <text x="330" y="1395" class="lbl-muted">on release cuts</text>
+  <path d="M560,1430 H440" class="edge-side"/>
+  <path d="M560,1450 C500,1450 460,1455 440,1455" class="edge-side"/>
+
+  <!-- ============= 6. END (branch) ============= -->
+  <polygon points="580,1565 700,1525 820,1565 700,1605" class="node decision"/>
+  <text x="700" y="1570" class="lbl" font-weight="600">what next?</text>
+  <path d="M700,1470 V1525" class="edge" marker-end="url(#arr)"/>
+
+  <!-- Branch labels -->
+  <text x="540" y="1622" class="lbl-muted" font-size="10">compact</text>
+  <text x="860" y="1622" class="lbl-muted" font-size="10">done</text>
+
+  <!-- LEFT: /jm-precompact (compact path) -->
+  <rect x="380" y="1640" width="240" height="60" rx="8" class="node cmd"/>
+  <text x="500" y="1663" class="lbl"><tspan font-weight="600">/jm-precompact</tspan></text>
+  <text x="500" y="1680" class="lbl-sm">distill before /compact</text>
+  <path d="M620,1580 C540,1580 500,1620 500,1640" class="edge" marker-end="url(#arr)"/>
+
+  <!-- RIGHT: /jm-wrap (done path) -->
+  <rect x="780" y="1640" width="240" height="60" rx="8" class="node cmd"/>
+  <text x="900" y="1663" class="lbl"><tspan font-weight="600">/jm-wrap</tspan></text>
+  <text x="900" y="1680" class="lbl-sm">quick wrap, ticket deferreds</text>
+  <path d="M780,1580 C860,1580 900,1620 900,1640" class="edge" marker-end="url(#arr)"/>
+
+  <!-- CENTER cluster: /jm-retro (auto, both paths invoke) -->
+  <rect x="620" y="1730" width="160" height="44" rx="8" class="node autocmd"/>
+  <text x="700" y="1750" class="lbl"><tspan font-weight="600">/jm-retro</tspan></text>
+  <text x="700" y="1764" class="lbl-sm">auto-invoked</text>
+  <path d="M540,1700 C580,1730 620,1745 640,1750" class="edge-auto"/>
+  <path d="M860,1700 C820,1730 780,1745 760,1750" class="edge-auto"/>
+  <text x="572" y="1722" class="lbl-muted" font-size="10">auto</text>
+  <text x="828" y="1722" class="lbl-muted" font-size="10">auto</text>
+
+  <!-- Memory write outcome bubble (both paths reach this) -->
+  <ellipse cx="700" cy="1820" rx="160" ry="26" class="node end"/>
+  <text x="700" y="1820" class="lbl" font-weight="600">Memory write</text>
+  <text x="700" y="1836" class="lbl-sm">~/.me/memory/ + CLAUDE.md</text>
+  <path d="M700,1774 V1794" class="edge-side" marker-end="url(#arr)"/>
+
+  <!-- After memory: compact path → /compact built-in; done path → END terminal -->
+  <rect x="380" y="1880" width="240" height="50" rx="8" class="node cmd"/>
+  <text x="500" y="1900" class="lbl"><tspan font-weight="600">/compact</tspan></text>
+  <text x="500" y="1916" class="lbl-sm">built-in, mid-session reset</text>
+  <path d="M620,1830 C560,1850 520,1870 500,1880" class="edge" marker-end="url(#arr)"/>
+
+  <ellipse cx="900" cy="1905" rx="110" ry="26" class="node end"/>
+  <text x="900" y="1905" class="lbl" font-weight="600">Session ends</text>
+  <text x="900" y="1921" class="lbl-sm">(true terminal)</text>
+  <path d="M780,1830 C840,1855 880,1875 890,1879" class="edge-side" marker-end="url(#arr)"/>
+
+  <!-- Cross-session loop: only from /compact path → back to Task input -->
+  <path d="M620,1905 C720,1905 1240,1905 1300,1500 C1340,1100 1340,400 900,90" class="edge-loop" marker-end="url(#arrG)"/>
+  <text x="1260" y="1010" class="lbl-muted" transform="rotate(-90 1260 1010)">after /compact, session continues with fresh capacity</text>
+
+</svg>
+
+  <footer>
+    Gates inline on spine — must clear forward. Red dashed = retry loop back to prior step. Side branches in dashed gray = sidecars (research, devils-advocate, implementer agents, UI QA, release commands). Gold dashed = iteration loops (CodeRabbit, cross-session memory). Memory write is a dashed outcome — not invoked, just what happens. /jm-retro is auto-invoked inside both /jm-precompact and /jm-wrap.
+  </footer>
+
+</div>
+</body>
+</html>
