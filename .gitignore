@@ -17,6 +17,8 @@ install.conf
 /scratch/
 *.bak
 *.bak-*
+.qa/
+.playwright-mcp/
 
 # Personal-layer instance data (only schemas ship)
 personal-template/dot-me/identity.yaml
