@@ -25,7 +25,8 @@ hook_event=$(echo "$input" | jq -r '.hook_event_name // empty')
 
 case "$hook_event" in
   UserPromptSubmit)
-    # Enforce one-nudge-per-session cap on the UserPromptSubmit path.
+    # Fast-path skip when nudge already emitted this session — atomic claim
+    # below handles the race; this just avoids the regex work in the common case.
     [ -f "$gate_dir/lateral_nudge_emitted" ] && exit 0
 
     prompt=$(echo "$input" | jq -r '.prompt // empty' | tr '[:upper:]' '[:lower:]')
@@ -40,9 +41,11 @@ case "$hook_event" in
     [ "$stuck" -eq 0 ] && exit 0
 
     # Inject context note — UserPromptSubmit hooks emit stdout as context.
-    # Mark emitted BEFORE printing so a concurrent re-entry can't double-fire.
-    touch "$gate_dir/lateral_nudge_emitted"
-    printf "Stuck-signal detected in user prompt. Consider invoking /lateral to fan out 5 reframing personas (hacker, researcher, simplifier, architect, contrarian) in parallel. One announce-line, then 5 parallel Agent calls. Only fires once per session.\n"
+    # Atomically claim emission via noclobber so two concurrent hooks cannot
+    # both pass the earlier check-then-act window.
+    if ( set -o noclobber; : > "$gate_dir/lateral_nudge_emitted" ) 2>/dev/null; then
+      printf "Stuck-signal detected in user prompt. Consider invoking /lateral to fan out 5 reframing personas (hacker, researcher, simplifier, architect, contrarian) in parallel. One announce-line, then 5 parallel Agent calls. Only fires once per session.\n"
+    fi
     exit 0
     ;;
 
