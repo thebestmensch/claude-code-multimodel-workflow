@@ -8,9 +8,8 @@
 # runbook at .claude/commands/<RUNBOOK_NAME>.md. The `tickets` CLI will
 # attempt to invoke <RUNBOOK_COMMAND> when picking up an agent-eligible
 # ticket; if the command file does not exist, ticket pickup fails before
-# any work begins. Reference: ~/.claude/commands/<RUNBOOK_NAME>.md in
-# the home-lab repo (services/tickets/), or fork an existing runbook
-# from a sibling project.
+# any work begins. Fork an existing runbook from a sibling project (or
+# the example shipped under plugin/templates/) as the starting point.
 slash_command: <RUNBOOK_COMMAND>
 mcp_servers:
   - <MCP_LINEAR_NAME>

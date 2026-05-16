@@ -25,7 +25,7 @@
 # tracker.
 #
 # Performance: git diff --name-only is O(staged-files) and reliably <100ms
-# on the home-lab repo (>1000 files).
+# even on repos with >1000 files.
 
 set -o pipefail
 

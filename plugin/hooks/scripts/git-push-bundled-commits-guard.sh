@@ -113,7 +113,7 @@ for i, tok in enumerate(tokens):
 [ "$matches" != "match" ] && exit 0
 
 # Resolve cwd. If the command is `cd <path> && git push ...`, use that path —
-# matches the pattern Claude uses to push from chezmoi sources, worktrees, etc.
+# matches the pattern Claude uses to push from worktrees, sibling repos, etc.
 cwd=""
 if printf '%s' "$command" | grep -qE '^[[:space:]]*cd[[:space:]]'; then
   cwd=$(printf '%s' "$command" | sed -nE 's|^[[:space:]]*cd[[:space:]]+([^[:space:]&;|]+).*|\1|p' | head -1)

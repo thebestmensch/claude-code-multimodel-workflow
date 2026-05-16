@@ -2,7 +2,7 @@
 
 JM's Claude Code workflow as a redistributable package — pre-built dispatch rules, project-aware reviewers, codified discipline patches, and the slash commands and agents that hold it all together.
 
-> **Status:** v0.1.0-pre. See [SPEC.md](./SPEC.md) for the full specification and migration roadmap.
+> **Status:** v0.1.0 — first tagged release. See [SPEC.md](./SPEC.md) for the full specification and roadmap.
 
 ## The workflow at a glance
 
@@ -70,6 +70,21 @@ flowchart TD
 
 For the richer original (gutters, retry arrows, full layout), open **[docs/workflow.html](./docs/workflow.html)** — same content with explicit stage gutters and bypass paths annotated.
 
+## Requirements
+
+The plugin itself only needs Claude Code. The opt-in tiers + a few hooks assume additional tooling — install what you want to use:
+
+| Surface | Requirement | Notes |
+|---|---|---|
+| Plugin (Tier 1, required) | Claude Code | Any recent CC version. |
+| Claude subscription | Claude Max (subscriptionType=max) | Reflected in `~/.claude/.credentials.json`. The plugin's discipline patterns assume Max-tier limits. `ANTHROPIC_API_KEY` users may hit rate limits sooner. |
+| Cross-provider review (Tier 2, opt-in) | `openai-codex` Claude Code plugin + Codex CLI auth | `claude plugin install codex@openai-codex` then `codex login`. Without it the `codex-*-gate` hooks fail closed on commits — disable those hooks in `settings.json` if you don't want Codex review. See `plugin/rules/codex-dispatch.md`. |
+| MCP secret wrappers (Tier 3, opt-in) | 1Password CLI (`op`) signed in | For the `claude()` / `codex()` shell wrappers that inject MCP secrets per-cwd. v0.1.0 doesn't ship the wrappers yet — they're documented in SPEC.md for adopters to wire manually. |
+| Hook helpers | `jq`, `gh`, `ripgrep` (`rg`), `git` | Most hooks shell out to these. `brew install jq gh ripgrep` on macOS. |
+| Suggested skill hint | `superpowers` plugin (optional) | The `keyword-detector` hook only emits the systematic-debugging hint when this plugin is installed. |
+
+If you skip the opt-in tiers, you'll see the workflow patterns + project-aware reviewers + commands + hooks — just without the cross-provider review layer and MCP-secret automation.
+
 ## Install
 
 ```bash
@@ -78,23 +93,22 @@ claude plugin marketplace add thebestmensch/jm-workflow
 
 # Install the plugin
 claude plugin install jm-workflow
-
-# Run the host-side bootstrap
-git clone https://github.com/thebestmensch/jm-workflow.git
-cd jm-workflow
-./install/install.sh
 ```
 
-`install.sh` walks you through five tiers — the plugin is required, everything else is opt-in.
+That's it for the plugin layer. The host-side install scripts (`install.sh`, `doctor.sh`, shell wrappers) referenced in [SPEC.md](./SPEC.md) are deferred to a later release — set up the opt-in tiers manually for now.
+
+> ⚠ **Heads up — codex gate friction without Codex installed.** The plugin ships fail-closed `codex-pre-commit-gate` and `codex-stop-gate` hooks. On a fresh install without the `openai-codex` plugin or `codex login`, your first commit attempt after editing code will be blocked with a message asking you to install Codex, write a bypass reason, or set `CODEX_GATE_FAIL_OPEN=1`. Two supported paths to avoid the friction:
+>
+> 1. **Use Codex** — `claude plugin install codex@openai-codex && codex login`. The gates then dispatch real cross-provider review.
+> 2. **Disable the gates** — in your project's or user-level `settings.json`, override the `PreToolUse` and `Stop` hook arrays to omit `codex-pre-commit-gate.sh`, `codex-stop-gate.sh`, and `codex-adversarial-cap.sh`. See `plugin/rules/codex-dispatch.md` for the contract you're disabling.
+>
+> A future release will gate hook registration on the openai-codex plugin's presence so this isn't a separate step.
 
 ## Update
 
 ```bash
 # Plugin updates (commands, agents, hooks, rules)
 claude plugin update jm-workflow
-
-# Host-side updates (tweakcc patches, install scripts, shell snippets)
-cd jm-workflow && git pull && ./install/install.sh --update
 ```
 
 ---
@@ -178,7 +192,7 @@ Grouped by what they protect:
 
 **UI / verification gates** (fire at `Stop`) — `visual-qa-stop-gate`, `interaction-qa-stop-gate`, `mobile-pattern-stop-gate`, `backend-verification-gate`, `auto-simplify-stop`.
 
-**Tooling drift & chezmoi safety** — `tweakcc-drift-warn`, `chezmoi-force-guard`, `chezmoi-source-drift-guard`, `chezmoi-target-edit-warn`, `main-checkout-drift-guard`.
+**Tooling drift** — `main-checkout-drift-guard`.
 
 **Context & cache health** — `tmux-ctx-mark`, `cache-cold-warn`, `cache-warmth-tracker`, `compact-nudge`, `precompact-clear-stop-gate-dedupe`, `session-init`, `orphan-mcp-cleanup`, `parallel-cc-cwd-warn`.
 
@@ -187,14 +201,6 @@ Grouped by what they protect:
 **Trackers** (record state for other hooks/rules to read) — `dispatch-tracker`, `sdd-tracker`, `sdd-review-gate`, `template-edit-counter`, `backend-edit-counter`, `track-edited-files`, `track-verify-commands`, `devils-advocate-plan-cleanup`, `commit-gate-cleanup`, `agent-eligible-self-mod-check`, `notify`.
 
 49 scripts total. The wiring (matcher patterns, timeouts, ordering) lives in `plugin/hooks/hooks.json`.
-
----
-
-## tweakcc prompt patches
-
-Eleven length-preserving patches applied to CC's native system prompt — installed once by `install/tweakcc-install.sh`, re-applied by `install/tweakcc-reapply.sh` after a CC upgrade. They tighten communication style, kill the stock "be concise" hedge, strengthen "investigate before acting," and tune Plan mode Phase 4 output.
-
-See SPEC.md § "Active tweakcc patches" for the full list and what each one changes.
 
 ---
 

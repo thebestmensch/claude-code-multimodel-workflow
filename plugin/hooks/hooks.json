@@ -106,16 +106,6 @@
         ]
       },
       {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/chezmoi-target-edit-warn.sh",
-            "timeout": 5
-          }
-        ]
-      },
-      {
         "matcher": "Bash",
         "hooks": [
           {
@@ -187,11 +177,6 @@
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/chezmoi-force-guard.sh",
-            "timeout": 3
-          },
-          {
-            "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/git-push-bundled-commits-guard.sh",
             "timeout": 3
           },
@@ -248,16 +233,6 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/investigate-before-acting.sh",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/chezmoi-source-drift-guard.sh",
             "timeout": 5
           }
         ]
@@ -433,16 +408,6 @@
       }
     ],
     "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/tweakcc-drift-warn.sh",
-            "timeout": 3
-          }
-        ]
-      },
       {
         "matcher": "",
         "hooks": [

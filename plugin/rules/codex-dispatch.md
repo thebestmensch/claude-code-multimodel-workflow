@@ -1,5 +1,11 @@
 # Codex Dispatch — Cross-Provider Adversarial Review
 
+> **Optional integration.** This rule covers the `openai-codex` Claude Code plugin (`claude plugin install codex@openai-codex`) plus the gate hooks shipped by jm-workflow.
+>
+> **Without the openai-codex plugin installed**, the `/codex:*` slash commands and the `codex:codex-rescue` subagent are unavailable. The `codex-stop-gate` / `codex-pre-commit-gate` / `codex-adversarial-cap` hooks shipped by jm-workflow **fail closed by design**: once you edit code, they emit a blocking message at commit/stop time and require either (a) installing + authenticating Codex CLI, or (b) writing a bypass reason to `/tmp/cc-gates/$SESSION_ID/skip_codex_gate`, or (c) opting into auditable degraded behavior with `CODEX_GATE_FAIL_OPEN=1` in the container/host env.
+>
+> If you don't intend to use Codex review, the supported path is to disable the `codex-*-gate` hooks in your local `settings.json` overrides — not to skip the rule and let the gate block silently.
+
 Codex (GPT-5.x) sits alongside Claude in the review topology as a **cross-provider second opinion**. Its value is non-overlap with Claude's blind spots — not redundancy with the in-session Claude reviewers. The `codex-stop-gate` hook blocks completion when substantive code edits ship without a Codex dispatch or a written bypass reason.
 
 This rule loads alongside `code-review-dispatch.md`, `visual-qa-dispatch.md`, and `advisory-agents-dispatch.md`. CodeRabbit owns generic-review territory at PR time; Codex owns *cross-provider* signal at commit time.

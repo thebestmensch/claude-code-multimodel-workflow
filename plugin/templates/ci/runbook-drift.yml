@@ -14,15 +14,16 @@ name: runbook-drift
 
 on:
   pull_request:
+    # Pattern allows hyphenated project slugs (e.g. `beta-svc-linear-work-ticket.md`).
     paths:
-      - '**/*-linear-work-ticket.md'
+      - '**/[a-z0-9]*-linear-work-ticket.md'
 
 permissions:
   contents: read
   pull-requests: write   # for the drift comment
 
 env:
-  # --- Adopter: edit these four values ---
+  # --- Adopter: edit these values ---
   # Path to this repo's runbook (the one touched by the PR).
   THIS_RUNBOOK: .claude/commands/REPLACE-linear-work-ticket.md
   # Sibling repo (OWNER/REPO) + path to the mirror runbook.
@@ -32,6 +33,12 @@ env:
   JM_WORKFLOW_REPO: OWNER/jm-workflow
   # Optional override (default 50 inside the script).
   DRIFT_THRESHOLD: '50'
+  # Required so the drift script can normalize project tokens + ticket
+  # prefixes before diffing. Without these, every cross-repo project-name
+  # or ticket-ID difference inflates the drift count and the workflow
+  # will fail on noise rather than real drift.
+  RUNBOOK_PROJECT_NAMES: 'projA,projB'    # comma-separated, lowercase
+  RUNBOOK_TICKET_PREFIXES: 'ABC,XYZ'      # comma-separated, uppercase
 
 jobs:
   drift:

@@ -1,6 +1,6 @@
 # Agent Conventions
 
-This project hosts an autonomous Linear ticket agent (invoked via the `tickets` CLI shipped with the home-lab repo's `services/tickets/`, or your own equivalent).
+This project hosts an autonomous Linear ticket agent (invoked via the `tickets` CLI or your own equivalent — see the "Slash command source of truth" section below for the runbook contract).
 
 ## Branch naming
 

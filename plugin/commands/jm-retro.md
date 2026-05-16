@@ -88,7 +88,7 @@ Run a quick health check on the setup. The exact dirs depend on how the user con
 - Any hooks with overly narrow scope that should be generalized? → widen patterns
 
 **Memory backup commit:**
-If memory entries were added or modified this session AND the memory dir is a git repo, commit + push the affected memory dir as part of the retro. Each memory dir is typically the only off-machine recovery path (dotfile managers like chezmoi do NOT track memory — it's state, not config).
+If memory entries were added or modified this session AND the memory dir is a git repo, commit + push the affected memory dir as part of the retro. Each memory dir is typically the only off-machine recovery path — dotfile managers track config, not state, so memory needs its own backup path.
 
 If a memory dir lacks a `.git/` and the user would benefit from backup, surface that and offer to set one up.
 

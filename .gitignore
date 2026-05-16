@@ -20,6 +20,9 @@ install.conf
 .qa/
 .playwright-mcp/
 
+# Claude Code session state (worktrees, plans, agent caches)
+.claude/
+
 # Personal-layer instance data (only schemas ship)
 personal-template/dot-me/identity.yaml
 personal-template/dot-me/preferences.yaml

@@ -16,10 +16,15 @@
 
 set -o errexit -o nounset -o pipefail
 
-# --- Configure (edit these three lines) ---------------------------------
-RUNBOOK_A="${HOME}/Documents/local/oneonme/.claude/commands/oom-linear-work-ticket.md"
-RUNBOOK_B="${HOME}/Documents/local/jm/home-lab/.claude/commands/jm-linear-work-ticket.md"
+# --- Configure (edit these lines for your checkout) ---------------------
+RUNBOOK_A="${HOME}/Documents/local/<repo-a>/.claude/commands/<projA>-linear-work-ticket.md"
+RUNBOOK_B="${HOME}/Documents/local/<repo-b>/.claude/commands/<projB>-linear-work-ticket.md"
 DRIFT_SCRIPT="${HOME}/Documents/local/jm-workflow/plugin/tools/check-runbook-drift.sh"
+
+# Tell the drift tool which project tokens + ticket prefixes to collapse
+# before diffing (otherwise they appear as drift events).
+export RUNBOOK_PROJECT_NAMES="${RUNBOOK_PROJECT_NAMES:-projA,projB}"
+export RUNBOOK_TICKET_PREFIXES="${RUNBOOK_TICKET_PREFIXES:-ABC,XYZ}"
 # ------------------------------------------------------------------------
 
 # Only run if the work-ticket runbook is staged. The configured RUNBOOK_A/B
@@ -29,7 +34,8 @@ DRIFT_SCRIPT="${HOME}/Documents/local/jm-workflow/plugin/tools/check-runbook-dri
 # regex without broadening the args — staged new/status files would run
 # against the work-ticket pair and silently pass.
 STAGED="$(git diff --cached --name-only --diff-filter=ACM)"
-if ! grep -qE '(^|/)[a-z]+-linear-work-ticket\.md$' <<<"$STAGED"; then
+# Pattern allows hyphenated project slugs (e.g. `beta-svc-linear-work-ticket.md`).
+if ! grep -qE '(^|/)[a-z0-9][a-z0-9-]*-linear-work-ticket\.md$' <<<"$STAGED"; then
   exit 0
 fi
 

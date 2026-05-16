@@ -12,6 +12,10 @@
 # paths in args. Don't broaden the regex alone — staged new/status files
 # would compare against the work-ticket pair and silently pass.
 #
+# Set RUNBOOK_PROJECT_NAMES / RUNBOOK_TICKET_PREFIXES env vars so the drift
+# tool knows which project tokens and ticket prefixes to collapse before
+# diffing (otherwise they show as drift events).
+#
 # Bypass for a single commit:  `SKIP=runbook-drift git commit ...`
 # Bump threshold:               `DRIFT_THRESHOLD=80 git commit ...`
 
@@ -22,9 +26,10 @@
       language: system
       pass_filenames: false
       # Trigger only when a runbook is staged; framework matches against staged paths.
-      files: '(^|/)[a-z]+-linear-work-ticket\.md$'
-      entry: bash -c '"$0" "$1" "$2"'
+      # Pattern allows hyphenated project slugs (e.g. `beta-svc-linear-work-ticket.md`).
+      files: '(^|/)[a-z0-9][a-z0-9-]*-linear-work-ticket\.md$'
+      entry: bash -c 'RUNBOOK_PROJECT_NAMES="${RUNBOOK_PROJECT_NAMES:-projA,projB}" RUNBOOK_TICKET_PREFIXES="${RUNBOOK_TICKET_PREFIXES:-ABC,XYZ}" "$0" "$1" "$2"'
       args:
-        - /Users/YOU/Documents/local/jm-workflow/plugin/tools/check-runbook-drift.sh
-        - /Users/YOU/Documents/local/oneonme/.claude/commands/oom-linear-work-ticket.md
-        - /Users/YOU/Documents/local/jm/home-lab/.claude/commands/jm-linear-work-ticket.md
+        - /absolute/path/to/jm-workflow/plugin/tools/check-runbook-drift.sh
+        - /absolute/path/to/repo-a/.claude/commands/<projA>-linear-work-ticket.md
+        - /absolute/path/to/repo-b/.claude/commands/<projB>-linear-work-ticket.md

@@ -2,7 +2,7 @@
 
 When dispatching agents via the `Agent` tool, **always include `subagent_type`** in the tool call parameters. This field is required for the HUD status line to display meaningful agent labels.
 
-- If the agent is a specialized type (e.g., `Explore`, `superpowers:code-reviewer`, `devils-advocate`), use that type name
+- If the agent is a specialized type (e.g., `Explore`, `devils-advocate`, or plugin-provided agents like `superpowers:code-reviewer` / `codex:codex-rescue` when those plugins are installed), use that type name
 - If the agent is a general-purpose implementer or investigator, use `subagent_type: "general-purpose"`
 - Never omit `subagent_type` — the HUD falls back to a generic label when it's missing
 
