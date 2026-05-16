@@ -30,9 +30,17 @@ if echo "$lower" | grep -qwE '(team up|use teams|agent teams)'; then
   hints="${hints}Use /teams to orchestrate coordinated agents.\n"
 fi
 
-# Debugging
+# Debugging — only suggest superpowers:systematic-debugging if that plugin is installed.
+# Detection tolerates both the bare cache dir (older layout) and the
+# marketplace-nested layout (cache/<marketplace>/superpowers/...) plus the
+# `claude plugin list` output which prints `❯ superpowers@<marketplace>` with
+# leading whitespace + a bullet.
 if echo "$lower" | grep -qwE '(debug this|trace this|root cause|why is .* broken|why is .* failing)'; then
-  hints="${hints}Use superpowers:systematic-debugging for structured root cause investigation.\n"
+  if compgen -G "$HOME/.claude/plugins/cache/*/superpowers" > /dev/null \
+     || [ -d "$HOME/.claude/plugins/cache/superpowers" ] \
+     || claude plugin list 2>/dev/null | grep -q 'superpowers'; then
+    hints="${hints}Use superpowers:systematic-debugging for structured root cause investigation.\n"
+  fi
 fi
 
 # Simplify
