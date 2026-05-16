@@ -1,16 +1,76 @@
 # jm-workflow
 
-JM's Claude Code workflow as a redistributable package — pre-built dispatch rules, project-aware reviewers, codified discipline patches.
+JM's Claude Code workflow as a redistributable package — pre-built dispatch rules, project-aware reviewers, codified discipline patches, and the slash commands and agents that hold it all together.
 
-> **Status:** v0.1.0-pre — repo skeleton only. See [SPEC.md](./SPEC.md) for full specification and migration roadmap.
+> **Status:** v0.1.0-pre. See [SPEC.md](./SPEC.md) for the full specification and migration roadmap.
 
-## What this gives you
+## The workflow at a glance
 
-- **Plugin** — commands, agents, hooks, dispatch rules, skills, project-overlay templates
-- **tweakcc patches** — discipline rules baked into CC's system prompt before any CLAUDE.md loads
-- **Optional tiers** — Codex cross-provider review, rtk token savings, 1Password MCP integration
+```mermaid
+flowchart TD
+    Intake([Task input<br/>ticket / question / dispatch]):::start
+    GateInvestigate{{HOOK<br/>investigate-before-acting}}:::hook
+    Brainstorm[/superpowers:brainstorming/]:::skill
+    Research[research-agent<br/>bg]:::agent
+    Devils[devils-advocate<br/>bg]:::agent
+    WritingPlans[/superpowers:writing-plans/]:::skill
+    GatePlan{{HOOK<br/>brainstorm-nudge · plan-gate}}:::hook
+    TDD[/superpowers:test-driven-development/]:::skill
+    SDD[/executing-plans ·<br/>subagent-driven-development/]:::skill
+    Implementers[implementer agents<br/>general-purpose · Explore · cavecrew · codex-rescue]:::agent
+    GateWorktree{{HOOK<br/>parallel-cc-worktree-gate}}:::hook
+    Verify[/superpowers:verification-before-completion/]:::skill
+    CodeReview[/code-review<br/>auto · lensed]:::autocmd
+    UiQA[/visual-qa · /accessibility-qa · /tone-qa<br/>auto if UI changed]:::autocmd
+    GateCodex{{HOOK<br/>codex-stop-gate}}:::hook
+    Codex[Codex adversarial-review<br/>cross-provider, GPT-5.x]:::agent
+    Commit[/commit — Conventional Commits/]:::autocmd
+    GateCommit{{HOOK<br/>pre-commit-gate · scope-check}}:::hook
+    PR[/jm-pr — drive to green/]:::cmd
+    CR[CodeRabbit<br/>external PR review]:::ext
+    Decision{what next?}:::start
+    Precompact[/jm-precompact<br/>distill before /compact/]:::cmd
+    Wrap[/jm-wrap<br/>quick wrap, ticket deferreds/]:::cmd
+    Retro[/jm-retro<br/>auto-invoked/]:::autocmd
+    Memory([Memory write<br/>~/.me/memory/ + CLAUDE.md]):::end
+    Compact[/compact<br/>built-in/]:::cmd
+    EndNode([Session ends]):::end
 
-## Install (when ready)
+    Intake --> GateInvestigate --> Brainstorm
+    Brainstorm <-.bg.-> Research
+    Brainstorm <-.bg.-> Devils
+    Brainstorm --> WritingPlans --> GatePlan --> TDD --> SDD
+    SDD <-.bg.-> Implementers
+    SDD --> GateWorktree --> Verify --> CodeReview
+    Verify -.if UI.-> UiQA --> GateCodex
+    CodeReview --> GateCodex --> Codex --> Commit
+    GateCodex -.bypass: written reason.-> Commit
+    Commit --> GateCommit --> PR
+    PR --> CR
+    CR -.iterate until green.-> PR
+    PR --> Decision
+    Decision -- compact --> Precompact --> Retro
+    Decision -- done --> Wrap --> Retro
+    Retro --> Memory
+    Memory --> Compact
+    Memory --> EndNode
+    Compact -.fresh capacity.-> Intake
+
+    classDef start fill:#1f6feb22,stroke:#1f6feb,color:#e6edf3
+    classDef end fill:transparent,stroke:#c9d1d9,stroke-dasharray:4 3,color:#e6edf3
+    classDef skill fill:#a371f722,stroke:#a371f7,color:#e6edf3
+    classDef cmd fill:#388bfd22,stroke:#388bfd,color:#e6edf3
+    classDef autocmd fill:#39c5d422,stroke:#39c5d4,color:#0e1116
+    classDef agent fill:#23863622,stroke:#238636,color:#e6edf3
+    classDef ext fill:#bf870022,stroke:#bf8700,color:#e6edf3
+    classDef hook fill:#da363322,stroke:#da3633,color:#e6edf3
+```
+
+**Reading the diagram:** red hexagons are blocking hooks (must clear forward, retry on reject). Purple boxes are `superpowers:*` skills Claude invokes. Cyan boxes are slash commands Claude auto-invokes at the right checkpoint. Blue boxes are slash commands you type. Green boxes are subagent dispatches. Hosted external services are gold. Side branches in dashed gray are sidecars (research, devils-advocate, implementer agents, UI QA) that rejoin the spine.
+
+For the richer original (gutters, retry arrows, full layout), open **[docs/workflow.html](./docs/workflow.html)** — same content with explicit stage gutters and bypass paths annotated.
+
+## Install
 
 ```bash
 # Add the marketplace
@@ -25,22 +85,123 @@ cd jm-workflow
 ./install/install.sh
 ```
 
+`install.sh` walks you through five tiers — the plugin is required, everything else is opt-in.
+
 ## Update
 
 ```bash
-# Plugin updates
+# Plugin updates (commands, agents, hooks, rules)
 claude plugin update jm-workflow
 
 # Host-side updates (tweakcc patches, install scripts, shell snippets)
-cd jm-workflow
-git pull
-./install/install.sh --update
+cd jm-workflow && git pull && ./install/install.sh --update
 ```
+
+---
+
+## Slash commands
+
+Slash commands are the user-facing surface — what you type (`/visual-qa`), what Claude auto-invokes mid-flow (`/code-review`), and the personal wrap-up rituals at end of session.
+
+### You invoke these
+
+| Command | What it does | When to use |
+|---|---|---|
+| `/commit` | Conventional Commits message + verifies pre-commit reviews fired on the staged diff. Model can't auto-invoke this (`disable-model-invocation: true`) because it performs a real `git commit`. | After verification passes, before pushing. |
+| `/jm-pr` | Drives an open PR to green: iterates with CodeRabbit and other automated reviewers until comments are resolved, then merges. | Once you push and CR starts commenting. |
+| `/jm-wrap` | End-of-session cleanup. Runs retro if needed, handles trivial deferreds inline, tickets the non-trivial ones, leaves the repo clean. | At "done for the day." |
+| `/jm-precompact` | Pre-compaction retro. Distills lessons and commits memory *before* `/compact` so durable rules survive summarization. | When context is hot and you want to keep going. |
+| `/jm-retro` | Reflect on the session, fold durable lessons into standing instructions, surface what comes next. | Auto-invoked inside `/jm-wrap` and `/jm-precompact`; rarely typed directly. |
+| `/jm-linear-groom` | Bulk-groom Linear tickets — labels, statuses, scope reduction, agent-eligibility decisions. | Weekly or when the queue gets noisy. |
+| `/teams` | Orchestrate a multi-codebase feature with coordinated subagents sharing a written contract. `disable-model-invocation: true` — blast radius spans services. | Cross-service feature work. |
+| `/lateral` | Five lateral-thinking personas dispatched in parallel to reframe a stuck problem; main session ranks and presents. | When you've cycled a problem 2–3 times without progress. |
+| `/devils-advocate` | Manually challenge a design via the `devils-advocate` agent. | When you want adversarial review on a plan you wrote yourself. |
+| `/agent-grep` | Symbol-aware ripgrep wrapper — each hit shows the enclosing function/class so you skip the follow-up Read. | Spot-checks where you'd normally `rg` then `cat`. |
+
+### Claude auto-invokes these mid-flow
+
+| Command | What it does | When it fires |
+|---|---|---|
+| `/code-review` | Runs a lensed code review on the diff being committed (working tree + staged by default). Detects applicable review lenses (security, data-integrity, performance, …) from the changed files. | After verification, before commit — auto-invoked per `code-review-dispatch.md`. |
+| `/visual-qa` | Two modes: **Bug QA** (broken rendering, anti-patterns; objective) and **Polish QA** (subjective design quality). | Auto-dispatches on UI checkpoints per `visual-qa-dispatch.md`. |
+| `/accessibility-qa` | WCAG 2.1 AA review on URL or screenshot — semantic HTML, ARIA, keyboard nav, contrast, screen reader experience. | At UI milestones when interactive elements / forms / nav / dynamic content changed. |
+| `/tone-qa` | Copy/voice review against the project's voice guide (`.claude/docs/voice-guide.md`). | At UI milestones when user-facing text changed. |
+| `/interaction-qa` | Hover/press/focus state QA — captures per-state screenshots, reviews against project interaction philosophy. | Before declaring an interactive UI task done. |
+
+---
+
+## Subagents
+
+Reviewers and investigators that the main session dispatches in the background. The dispatch rules (below) decide *when* each fires; you rarely call them by name.
+
+| Agent | Audit focus |
+|---|---|
+| `devils-advocate` | Challenge designs and plans before approval — overengineering, missed existing solutions, hidden assumptions, YAGNI violations. Adversarial but evidence-based. |
+| `research-agent` | Deep pre-implementation research — explores tools/packages/services, evaluates fit against your stack, returns 2–3 options with tradeoffs. Feeds back into brainstorming. |
+| `silent-failure-hunter` | Error handling for silent failures, swallowed exceptions, inadequate fallbacks. |
+| `test-gap-analyzer` | Test coverage for behavioral completeness — untested error paths, brittle assertions, implementation-detail tests. |
+| `type-design-analyzer` | Encapsulation, invariant expression, and enforcement quality in new/changed types and schemas. |
+| `concurrency-auditor` | DB locking, held connections across async boundaries, overlapping writes, race conditions. |
+| `api-contract-reviewer` | Backend changes vs. frontend consumers — missing fields, changed response shapes, renamed endpoints. |
+| `sentry-discipline-reviewer` | Sentry capture calls for noise discipline — expected errors amplified, missing PII scrubbing, breadcrumb leaks. |
+| `security-reviewer` | Secrets exposure, auth bypasses, injection, OWASP top 10. |
+| `repo-explorer` | Read-only repo investigation — keeps file contents out of main context. |
+| `n8n-patcher` | Patch n8n workflows via SQLite. Knows the three-table caveat, shell interpolation hazards, connection verification. |
+
+---
+
+## Dispatch rules
+
+The rules layer is what makes the agents and slash commands *automatic*. Each rule is a markdown file injected at session start (via a `SessionStart` hook because CC's plugin loader doesn't auto-inject `rules/`). Rules tell Claude **when** to dispatch **which** agent or command, the cap per dispatch round, and how to read the results.
+
+| Rule | Tells Claude when to… |
+|---|---|
+| `advisory-agents-dispatch.md` | Auto-dispatch `research-agent` and `devils-advocate` during brainstorming and plan-writing — complexity gate, announcement requirement, how to fold results back in. |
+| `agent-dispatch.md` | Always pass `subagent_type` and use `isolation: "worktree"` for write-mode agents. The discipline that keeps the HUD readable and prevents git-index collisions across parallel sessions. |
+| `code-review-dispatch.md` | Auto-dispatch project-specific reviewers pre-commit; reserve universal supplementary agents for explicit `/code-review`. Defines the 2-reviewer-per-commit cap and the CodeRabbit boundary. |
+| `codex-dispatch.md` | Cross-provider adversarial review via Codex (GPT-5.x). The most prescriptive rule in the set: when adversarial is mandatory, the Red Flags table of rationalizations to reject, valid bypass reasons, the eight known gate gaps. |
+| `visual-qa-dispatch.md` | Fire the right QA reviewers at the right checkpoint (Bug QA every checkpoint, Polish/A11y/Tone at milestones), how to read recommendation-tier vs. severity-tier findings, and the 2-pass cap to avoid infinite correction loops. |
+
+---
+
+## Hooks
+
+Hooks are the disciplined enforcement layer — most are silent until they catch something. They run on Claude's tool calls (`PreToolUse`, `PostToolUse`), at the boundary of every turn (`UserPromptSubmit`, `Stop`), and at session lifecycle events (`SessionStart`, `PreCompact`).
+
+Grouped by what they protect:
+
+**Pre-action gates** (block forward progress until the premise is right) — `investigate-before-acting`, `brainstorm-nudge`, `devils-advocate-plan-gate`, `ambiguity-gate`, `restate-goal-gate`, `bypass-request-gate`.
+
+**Commit safety** — `pre-commit-gate`, `commit-scope-check`, `commit-on-drifted-branch-guard`, `git-push-bundled-commits-guard`, `parallel-cc-worktree-gate`, `gh-actions-yaml-lint`.
+
+**Codex cross-provider review** — `codex-pre-commit-gate`, `codex-stop-gate`, `codex-adversarial-cap`, `codex-bash-tracker`. These enforce the rules in `codex-dispatch.md`.
+
+**UI / verification gates** (fire at `Stop`) — `visual-qa-stop-gate`, `interaction-qa-stop-gate`, `mobile-pattern-stop-gate`, `backend-verification-gate`, `auto-simplify-stop`.
+
+**Tooling drift & chezmoi safety** — `tweakcc-drift-warn`, `chezmoi-force-guard`, `chezmoi-source-drift-guard`, `chezmoi-target-edit-warn`, `main-checkout-drift-guard`.
+
+**Context & cache health** — `tmux-ctx-mark`, `cache-cold-warn`, `cache-warmth-tracker`, `compact-nudge`, `precompact-clear-stop-gate-dedupe`, `session-init`, `orphan-mcp-cleanup`, `parallel-cc-cwd-warn`.
+
+**Anti-loop detectors** — `lateral-stuck-detector`, `bypass-pattern-warn`, `schedule-wakeup-loop-gate`, `keyword-detector`.
+
+**Trackers** (record state for other hooks/rules to read) — `dispatch-tracker`, `sdd-tracker`, `sdd-review-gate`, `template-edit-counter`, `backend-edit-counter`, `track-edited-files`, `track-verify-commands`, `devils-advocate-plan-cleanup`, `commit-gate-cleanup`, `agent-eligible-self-mod-check`, `notify`.
+
+47 scripts total. The wiring (matcher patterns, timeouts, ordering) lives in `plugin/hooks/hooks.json`.
+
+---
+
+## tweakcc prompt patches
+
+Eleven length-preserving patches applied to CC's native system prompt — installed once by `install/tweakcc-install.sh`, re-applied by `install/tweakcc-reapply.sh` after a CC upgrade. They tighten communication style, kill the stock "be concise" hedge, strengthen "investigate before acting," and tune Plan mode Phase 4 output.
+
+See SPEC.md § "Active tweakcc patches" for the full list and what each one changes.
+
+---
 
 ## Documentation
 
 - [SPEC.md](./SPEC.md) — full specification, three-layer model, tier breakdown, decision log
-- [docs/workflow.html](./docs/workflow.html) — visual flowchart of the end-to-end workflow (ticket → retro)
+- [docs/workflow.html](./docs/workflow.html) — rich SVG flowchart with explicit stage gutters and bypass paths
 - [CHANGELOG.md](./CHANGELOG.md) — release history
 
 ## Not in scope
