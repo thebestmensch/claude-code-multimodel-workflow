@@ -40,6 +40,7 @@ These are the specific thoughts that mean STOP — you're rationalizing your way
 | "Background dispatch will slow me down" | `--background` is non-blocking. You're inventing friction. Adversarial. |
 | "It's late / the user is waiting" | The gate exists because deadline pressure is exactly when shipping bypassed review burns the user. Adversarial. |
 | "I'll run it after the commit" | The gate fires on Stop. After the commit is too late — the bypass discipline is *before* you're done. Adversarial. |
+| "I already have the result, dispatching again will refresh the marker" | Re-dispatching on the same diff to satisfy a stuck gate is loop-drain — duplicate cost, zero new signal, violates the one-dispatch-per-trigger cap. Bypass with the existing review evidence cited as the reason. |
 
 ## Announcement Requirement
 
@@ -160,6 +161,20 @@ The `codex-stop-gate.sh` hook enforces "Codex diff dispatch happened" only for f
 8. **A completed review on the unstaged diff does NOT satisfy the gate once you `git add`.** The pre-commit + stop-gate hooks track whether a dispatch covered the currently-staged file set, not whether *some* review completed this session. Staging files after a successful adversarial-review (or `git restore --staged` + re-stage cycle) re-invalidates the gate's "covered" state even though the review evidence is sitting in `codex-companion.mjs result`. Symptom: gate fires with "results have not been retrieved into context" immediately after `git add`, even right after you fetched the result. Recovery: write a bypass citing the completed review — DO NOT re-dispatch. The "right answer to a stuck gate is bypass + existing evidence" rule supersedes the "always dispatch" default once a review has already happened on this diff.
 
 A future iteration may close these gaps via a SessionStart-baselined augmenter. The naive `git status --porcelain` augmenter doesn't work — it false-positives on pre-existing dirty work that the session didn't touch (validated empirically; see this rule's revision history).
+
+## Port / Migration Disposition
+
+When porting or migrating code from a source (live config, sibling repo, command file) into a new home (plugin, generalized template, redistributable bundle), Codex reviews the **port diff** — but findings often apply to the source too. Don't treat the port as the only thing to fix.
+
+**On any HIGH or MEDIUM Codex finding against a port:**
+
+1. **Check whether the same defect exists in the source.** Structural ambiguity in the port (filter direction, semantic boundary, condition wording) is often structural ambiguity in the source — the port made it visible by stripping workspace-specific context.
+2. **If yes:** patch BOTH the port AND the source in the same session. The source is your daily driver; leaving it broken because the gate didn't fire on it is the failure mode this rule blocks. Separate commit in the source repo, mention in retro.
+3. **If no:** patch the port only, note in the commit message what generalization surfaced.
+
+**Why:** Generalization-as-audit is real signal. Ports force explicit semantics where the source could rely on context; defects that hide in workspace-specific source code surface in generalized ports. The Codex finding on the port is the *first* time the defect was visible, not the *only* place it lives.
+
+**Don't defer.** "Worth backporting when convenient" is the lazy path. Either backport now or open a ticket against the source repo so the bug doesn't rot — silent decay of source while polished port ships is the anti-pattern.
 
 ## Boundary
 

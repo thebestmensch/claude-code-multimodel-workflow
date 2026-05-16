@@ -79,6 +79,8 @@ Anomalies:
 - `In Review` > 7d.
 - `Todo` > 30d untouched (no `updatedAt` movement).
 
+**Workspace-age phase-skip.** Compute days since the oldest ticket's `createdAt` (proxy for workspace age). If age < a phase's threshold, explicitly announce the skip (e.g. "Phase 4a skipped: workspace 19d old, no candidates >60d") instead of walking an empty filter. Same for Phase 3 / 4b when their target state buckets are all empty — call it out, don't silently no-op.
+
 Anomalies reported only — they flow into phases 2–5 naturally. No writes.
 
 ### 2. Phase 2 — Open-tickets report (read-only)
@@ -190,6 +192,10 @@ Per ticket prompt:
 
 Walk `Todo` tickets only. Skip Backlog (triage is separate), skip In Progress / In Review (already prioritized by virtue of pickup).
 
+**Partition before walking.** If Todo has 30+ tickets, group them by label (`bug` / `feature` / `improvement` / `research` vs `idea` / `personal` queue-dump). Offer to bulk-move queue-dump (`idea` / `personal` / `media`) tickets to Backlog before per-ticket walk — these are Life Queue items mistakenly sitting in Todo (common after Trilium migration). Bulk Todo→Backlog is permitted (the reverse Backlog→Todo is gated by promote-tbd; this direction is not). After the partition, Phase 5 walks only the remaining work-shape tickets.
+
+**Bulk-confirm matrix.** For >15 remaining tickets, present the priority+estimate suggestions as a single table and apply via one bulk-confirm rather than per-ticket prompts. The runbook's per-ticket prompt format is the fallback for small batches or when individual rationale matters.
+
 **Estimate rubric** (render once at phase start, reference "see rubric above" on subsequent prompts):
 
 | Value | Shape | Examples |
@@ -291,7 +297,7 @@ Keep the audit trail in `~/.claude/logs/` — it's session state, not user-conte
 ## Don't
 
 - Don't create tickets — that's a separate workflow.
-- Don't transition `Backlog → Todo` — that's a structural-gate-validated promotion job, not a grooming concern.
+- Don't transition `Backlog → Todo` — that's a structural-gate-validated promotion job, not a grooming concern. (Reverse, Todo → Backlog, is permitted in Phase 5 partition for queue-dump items.)
 - Don't write to projects, cycles, milestones.
 - Don't run on a recurring schedule — on-demand only.
 - Don't auto-close tickets the user typed "completed: <PREFIX>-N" for without confirming the user actually meant the current ticket (echo the title back before applying).

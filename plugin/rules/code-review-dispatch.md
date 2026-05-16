@@ -13,7 +13,7 @@
 
 The auto-firing reviewers come from the workspace's `code-review-*.md` overlay (e.g., your project's `code-review-<project>.md`). The base lensed review and the universal supplementary agents do **not** auto-fire — CodeRabbit owns that turf at PR time.
 
-**Non-code feature work** (runbook updates, slash-command rewrites, design-doc implementations): dispatch `superpowers:code-reviewer` with the spec/plan as context. Skip outright only for trivial doc edits.
+**Non-code feature work** (runbook updates, slash-command rewrites, design-doc implementations): invoke the `superpowers:requesting-code-review` skill, which dispatches `Task (general-purpose)` with the reviewer persona/checklist from `superpowers:requesting-code-review/code-reviewer.md`. Pass the spec/plan as context. Skip outright only for trivial doc edits. (The legacy `superpowers:code-reviewer` named agent was removed in superpowers v5.1.0.)
 
 ## Explicit `/code-review` (opt-in)
 
