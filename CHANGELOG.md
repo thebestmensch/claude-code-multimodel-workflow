@@ -8,6 +8,7 @@ All notable changes to `jm-workflow` documented here. Format: [Keep a Changelog]
 - Repo skeleton: marketplace.json, plugin.json, dir structure
 - SPEC.md capturing audit findings + decisions
 - README.md, .gitignore
+- `/jm-precompact` command — pre-compaction retro that distills lessons + commits memory before `/compact` summarizes the transcript. Reuses `/jm-retro` body §§ 1-6 by reference; skips § 7 "What's Next" because session continues mid-stream.
 
 ### Pending (per SPEC.md migration roadmap)
 - Canonical-plus-overlay drift fix in JM's own repos
