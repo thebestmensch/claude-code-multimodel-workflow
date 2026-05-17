@@ -20,8 +20,8 @@ flowchart TD
     Implementers[implementer agents<br/>general-purpose · Explore · cavecrew · codex-rescue]:::agent
     GateWorktree{{HOOK<br/>parallel-cc-worktree-gate}}:::hook
     Verify[/superpowers:verification-before-completion/]:::skill
-    CodeReview[/code-review<br/>auto · lensed]:::autocmd
-    UiQA[/visual-qa · /accessibility-qa · /tone-qa<br/>auto if UI changed]:::autocmd
+    CodeReview[/code-review<br/>auto · lensed/]:::autocmd
+    UiQA[/visual-qa · /accessibility-qa · /tone-qa<br/>auto if UI changed/]:::autocmd
     GateCodex{{HOOK<br/>codex-stop-gate}}:::hook
     Codex[Codex adversarial-review<br/>cross-provider, GPT-5.x]:::agent
     Commit[/commit — Conventional Commits/]:::autocmd
