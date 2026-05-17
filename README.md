@@ -56,17 +56,30 @@ flowchart TD
     Memory --> EndNode
     Compact -.fresh capacity.-> Intake
 
-    classDef start fill:#1f6feb22,stroke:#1f6feb,color:#e6edf3
-    classDef terminus fill:transparent,stroke:#c9d1d9,stroke-dasharray:4 3,color:#e6edf3
-    classDef skill fill:#a371f722,stroke:#a371f7,color:#e6edf3
-    classDef cmd fill:#388bfd22,stroke:#388bfd,color:#e6edf3
-    classDef autocmd fill:#39c5d422,stroke:#39c5d4,color:#0e1116
-    classDef agent fill:#23863622,stroke:#238636,color:#e6edf3
-    classDef ext fill:#bf870022,stroke:#bf8700,color:#e6edf3
-    classDef hook fill:#da363322,stroke:#da3633,color:#e6edf3
+    classDef start fill:#1f6feb22,stroke:#1f6feb
+    classDef terminus fill:transparent,stroke:#6e7681,stroke-dasharray:4 3
+    classDef skill fill:#a371f722,stroke:#a371f7
+    classDef cmd fill:#388bfd22,stroke:#388bfd
+    classDef autocmd fill:#39c5d422,stroke:#39c5d4
+    classDef agent fill:#23863622,stroke:#238636
+    classDef ext fill:#bf870022,stroke:#bf8700
+    classDef hook fill:#da363322,stroke:#da3633
 ```
 
-**Reading the diagram:** red hexagons are blocking hooks (must clear forward, retry on reject). Purple boxes are `superpowers:*` skills Claude invokes. Cyan boxes are slash commands Claude auto-invokes at the right checkpoint. Blue boxes are slash commands you type. Green boxes are subagent dispatches. Hosted external services are gold. Side branches in dashed gray are sidecars (research, devils-advocate, implementer agents, UI QA) that rejoin the spine.
+**Legend**
+
+| Shape | Color | What it represents |
+|---|---|---|
+| rounded | blue `#1f6feb` | Intake / terminal node |
+| rounded, dashed | gray `#6e7681` | Outcome (not invoked) |
+| parallelogram | purple `#a371f7` | `superpowers:*` skill — Claude invokes |
+| parallelogram | blue `#388bfd` | `/command` — JM types it |
+| parallelogram | cyan `#39c5d4` | `/command` — Claude auto-invokes |
+| rectangle | green `#238636` | Subagent dispatch (often background) |
+| rectangle | gold `#bf8700` | External / hosted service |
+| hexagon | red `#da3633` | Hook gate — must clear, retry on reject |
+
+Side branches in dashed lines are sidecars (research, devils-advocate, implementer agents, UI QA) that rejoin the spine.
 
 For the richer original (gutters, retry arrows, full layout), open **[docs/workflow.html](./docs/workflow.html)** — same content with explicit stage gutters and bypass paths annotated.
 
