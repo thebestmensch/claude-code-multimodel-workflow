@@ -32,9 +32,9 @@ flowchart TD
     Precompact[/jm-precompact<br/>distill before /compact/]:::cmd
     Wrap[/jm-wrap<br/>quick wrap, ticket deferreds/]:::cmd
     Retro[/jm-retro<br/>auto-invoked/]:::autocmd
-    Memory([Memory write<br/>~/.me/memory/ + CLAUDE.md]):::end
+    Memory([Memory write<br/>~/.me/memory/ + CLAUDE.md]):::terminus
     Compact[/compact<br/>built-in/]:::cmd
-    EndNode([Session ends]):::end
+    EndNode([Session ends]):::terminus
 
     Intake --> GateInvestigate --> Brainstorm
     Brainstorm <-.bg.-> Research
@@ -57,7 +57,7 @@ flowchart TD
     Compact -.fresh capacity.-> Intake
 
     classDef start fill:#1f6feb22,stroke:#1f6feb,color:#e6edf3
-    classDef end fill:transparent,stroke:#c9d1d9,stroke-dasharray:4 3,color:#e6edf3
+    classDef terminus fill:transparent,stroke:#c9d1d9,stroke-dasharray:4 3,color:#e6edf3
     classDef skill fill:#a371f722,stroke:#a371f7,color:#e6edf3
     classDef cmd fill:#388bfd22,stroke:#388bfd,color:#e6edf3
     classDef autocmd fill:#39c5d422,stroke:#39c5d4,color:#0e1116
