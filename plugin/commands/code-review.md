@@ -9,10 +9,10 @@ Run a lensed code review on recent changes. Automatically detects which review l
 
 - `$ARGUMENTS`: Optional. Accepts one or more of:
   - A git range: `HEAD~3..HEAD`, `abc123..def456`
-  - `--cached` or `--staged` — force review of staged-only diff
-  - `--worktree` — force review of unstaged + staged working-tree diff
+  - `--cached` or `--staged`: force review of staged-only diff
+  - `--worktree`: force review of unstaged + staged working-tree diff
   - A lens name to force: `security`, `performance`, `data-integrity`, `migration`
-  - `all` — force all lenses regardless of file triggers
+  - `all`: force all lenses regardless of file triggers
   - Empty → **default selection rule** below
 
 ## Default Selection Rule
@@ -30,7 +30,7 @@ Always announce the selected range in the output (e.g. `Range: staged diff (5 fi
 1. **Determine the diff range:**
    ```bash
    if [ -n "$EXPLICIT_RANGE" ]; then
-     # User passed a range — use it
+     # User passed a range: use it
      RANGE="$EXPLICIT_RANGE"; SCOPE="explicit"
    elif ! git diff --cached --quiet; then
      RANGE="--cached"; SCOPE="staged"
@@ -46,7 +46,7 @@ Always announce the selected range in the output (e.g. `Range: staged diff (5 fi
    git diff --name-only $RANGE
    ```
 
-   Record `SCOPE` and the file list — `/commit` will check that the most recent code review's `SCOPE` matches the staged diff's file list.
+   Record `SCOPE` and the file list. `/commit` will check that the most recent code review's `SCOPE` matches the staged diff's file list.
 
 2. **Detect applicable lenses:**
 
@@ -57,7 +57,7 @@ Always announce the selected range in the output (e.g. `Range: staged diff (5 fi
    If `$ARGUMENTS` contains a lens name, force-activate that lens regardless of triggers.
    If `$ARGUMENTS` contains `all`, activate all lenses.
 
-   If no lenses match, still run the base code review without lenses — the review is still valuable.
+   If no lenses match, still run the base code review without lenses; the review is still valuable.
 
 3. **Build the review prompt:**
 
@@ -129,7 +129,7 @@ Read the CLAUDE.md file for project context and conventions.
 ## Output Format
 
 ### Strengths
-[What's well done — be specific, cite file:line]
+[What's well done: be specific, cite file:line]
 
 ### Issues
 
@@ -165,8 +165,8 @@ Present as:
 ```
 ## Code Review Results
 
-**Range:** `{SCOPE}` — `{RANGE}` ({N} files changed)
-**Files reviewed:** {comma-separated file list — `/commit` checks this matches the staged diff}
+**Range:** `{SCOPE}` (`{RANGE}`, {N} files changed)
+**Files reviewed:** {comma-separated file list; `/commit` checks this matches the staged diff}
 **Lenses:** {list of activated lenses, or "base only"}
 
 ### Strengths

@@ -5,7 +5,7 @@
 #   - Python anywhere under services/<svc>/ (app/, CLI packages like tickets/)
 #   - Container/deploy infra: Dockerfile, docker-compose*.yml, service shell scripts
 #   - Repo-wide infra: justfile, GitHub Actions workflows
-# Tests excluded — test-only commits don't need a code-review dispatch.
+# Tests excluded: test-only commits don't need a code-review dispatch.
 set -o pipefail
 
 input=$(cat)
@@ -14,7 +14,7 @@ file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
 
 [ -z "$session_id" ] || [ -z "$file_path" ] && exit 0
 
-# Skip test files — test-only commits shouldn't require a code-review dispatch
+# Skip test files: test-only commits shouldn't require a code-review dispatch
 case "$file_path" in
   */tests/*|*/test_*.py|*_test.py) exit 0 ;;
 esac

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hook — Cache Cold Warning (UserPromptSubmit)
+# Hook: Cache Cold Warning (UserPromptSubmit)
 # Warns when the time since the last model response exceeds the 5-minute
 # Anthropic prompt cache TTL, so the user (and Claude) know this turn
 # pays full system-prompt + tool-def token cost.

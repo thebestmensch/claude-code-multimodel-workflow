@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stop hook — blocks completion when substantive code edits ship without a
+# Stop hook, blocks completion when substantive code edits ship without a
 # Codex *diff* review dispatch. Plan-mode dispatches (`codex_plan_dispatched`)
 # are informational and do not satisfy this gate; only post-impl review of the
 # working tree counts.
@@ -7,22 +7,22 @@
 # Bypassed via codex_diff_dispatched marker (touched by codex-bash-tracker on
 # successful review/adversarial-review invocations) or a reasoned
 # skip_codex_gate file. Both must be FRESHER than the most recent tracked
-# edit — staleness re-fires the gate (closes round-2 H1).
+# edit, staleness re-fires the gate (closes round-2 H1).
 #
 # SCOPE: this gate enforces review for files tracked via Edit|Write hooks
 # (~/.claude/hooks/track-edited-files.sh) PLUS files surfaced at gate-fire
 # time by the augmentation helper (`git diff --name-only HEAD`). The
-# augmentation closes the Bash-mediated edit gap — `sed -i`, generators,
+# augmentation closes the Bash-mediated edit gap, `sed -i`, generators,
 # formatters, and shell-driven patches now show up in edited_files via the
 # git working-tree diff. Remaining gap: user-facing copy in *.md / *.json /
 # *.yml / *.yaml / *.toml / *.txt is filtered out by both the upstream
 # tracker AND the augmentation, even though codex-dispatch.md lists it as
-# mandatory adversarial-review territory. Same discipline — the rule's Red
+# mandatory adversarial-review territory. Same discipline, the rule's Red
 # Flags table tells you when to dispatch.
 #
 # Mirrors the visual-qa-stop-gate pattern. Decision of which Codex command to
 # run (review vs adversarial-review) lives in ~/.claude/rules/codex-dispatch.md,
-# not here — the hook only enforces "Codex diff review was dispatched at all."
+# not here, the hook only enforces "Codex diff review was dispatched at all."
 set -o pipefail
 
 # shellcheck disable=SC1091
@@ -36,7 +36,7 @@ gate_dir="${CC_GATE_DIR_BASE:-/tmp/cc-gates}/$session_id"
 edited_file="$gate_dir/edited_files"
 
 # Augment edited_files with working-tree paths the Edit|Write tracker missed.
-# Mode "worktree" → `git diff --name-only -z HEAD` — uncommitted modifications.
+# Mode "worktree" → `git diff --name-only -z HEAD`, uncommitted modifications.
 # Closes the Bash-mediated edit gap for sessions that edit via shell tools and
 # stop without ever going through git commit (which would have triggered the
 # pre-commit-gate's --cached augmentation). No-op outside a git repo.
@@ -54,7 +54,7 @@ mkdir -p "$gate_dir" 2>/dev/null || true
 #   - `_dispatched` mtime = "moment dispatch started" (set only by
 #     review/adversarial-review invocation, never by `result` retrieval).
 #     Requiring it newer than every edit guarantees the dispatched diff
-#     covered the current working tree — no edits snuck in between dispatch
+#     covered the current working tree, no edits snuck in between dispatch
 #     and now.
 #   - `_handled` mtime = "moment results landed in model context" (set by
 #     sync review OR `result` retrieval). Requiring it newer than every edit
@@ -76,7 +76,7 @@ if [ -f "$gate_dir/codex_diff_handled" ] \
   exit 0
 fi
 
-# Reasoned bypass — must name a real reason, not just "skip" — and must be
+# Reasoned bypass, must name a real reason, not just "skip", and must be
 # fresher than the latest edit (same staleness logic as the marker).
 if [ -f "$gate_dir/skip_codex_gate" ] \
    && ! [ "$edited_file" -nt "$gate_dir/skip_codex_gate" ]; then
@@ -92,7 +92,7 @@ fi
 code_files=$(sort -u "$edited_file" || true)
 [ -z "$code_files" ] && exit 0
 
-# Codex unavailability handling — runs ONLY after the handled-marker and
+# Codex unavailability handling, runs ONLY after the handled-marker and
 # skip-reason fast-paths above, so a fresh review or written bypass remains
 # reachable even when codex auth lapses (closes Codex round-5 H1: previous
 # ordering made the documented escape hatches unrecoverable when codex was
@@ -112,12 +112,12 @@ code_files=$(sort -u "$edited_file" || true)
 if ! command -v codex >/dev/null 2>&1 || ! timeout 5 codex login status >/dev/null 2>&1; then
   if [ "${CODEX_GATE_FAIL_OPEN:-}" = "1" ]; then
     # Even with fail-open opted in, refuse to silently skip when a review was
-    # dispatched but never retrieved into context — fail-opening here would
+    # dispatched but never retrieved into context, fail-opening here would
     # lose the dispatched review's findings entirely (closes Codex round-6
     # H1, round-7 H1). Detection: dispatched marker exists AND either no
     # handled marker, OR dispatched is newer than handled (fresh dispatch
     # superseded a prior handle). Edited_file freshness is deliberately NOT
-    # part of this check — post-dispatch edits don't change the fact that
+    # part of this check, post-dispatch edits don't change the fact that
     # the dispatched review is unhandled. Force `result` retrieval (often
     # still works because the task queue is local state) or an explicit
     # skip reason naming the lost-review case.
@@ -135,7 +135,7 @@ if ! command -v codex >/dev/null 2>&1 || ! timeout 5 codex login status >/dev/nu
     fi
     # Audit log lands in CODEX_GATE_AUDIT_FILE if set (compose binds this to a
     # durable mount path, e.g. /home/agent/appdata/codex-gate-bypass.log on the
-    # linear-agent container — closes Codex round-7 H1: bypass_log.txt under
+    # linear-agent container, closes Codex round-7 H1: bypass_log.txt under
     # /tmp/cc-gates is wiped on container restart, erasing the audit trail
     # exactly when fail-open silently let an unreviewed change ship). Falls
     # back to the session gate_dir for interactive host runs.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check-runbook-drift.sh — flag semantic drift between two near-mirror
+# check-runbook-drift.sh: flag semantic drift between two near-mirror
 # runbook .md files while ignoring identifier-substitution noise.
 #
 # Strips before diffing (substitutions normalize so two near-mirror runbooks
@@ -70,13 +70,13 @@ if [[ -n "${RUNBOOK_TICKET_PREFIXES:-}" ]]; then
   ticket_alt=$(printf '%s' "$RUNBOOK_TICKET_PREFIXES" | perl -ne 'chomp; print join("|", map { quotemeta(uc $_) } split(/,/));')
 fi
 
-# Loud warning when both env vars are unset — the strip phase still removes
+# Loud warning when both env vars are unset. The strip phase still removes
 # UUIDs / Linear URLs, but project-name and ticket-prefix tokens will pass
 # through and show up as drift. Better to emit a visible signal than to
 # silently undercount or overcount drift events. Suppress with RUNBOOK_DRIFT_QUIET=1.
 if [[ -z "$project_alt" && -z "$ticket_alt" && -z "${RUNBOOK_DRIFT_QUIET:-}" ]]; then
   echo "warning: RUNBOOK_PROJECT_NAMES and RUNBOOK_TICKET_PREFIXES are both unset." >&2
-  echo "         Project names and ticket IDs will NOT be normalized before diffing — " >&2
+  echo "         Project names and ticket IDs will NOT be normalized before diffing; " >&2
   echo "         expect inflated drift event counts. Set the env vars or pass" >&2
   echo "         RUNBOOK_DRIFT_QUIET=1 to suppress this warning." >&2
 fi

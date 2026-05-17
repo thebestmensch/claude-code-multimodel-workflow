@@ -8,7 +8,7 @@
 #
 # History: a regex-based PostToolUse lint hook (mobile-pattern-lint.sh) used
 # to populate `mobile_lint_violations` and trigger a separate CRITICAL-block
-# branch here. Removed 2026-05-08 — the lint produced false positives on
+# branch here. Removed 2026-05-08: the lint produced false positives on
 # aliased imports the regex could not parse and added friction without
 # catching anything the deeper reviewer wouldn't. Lint-equivalent enforcement
 # now belongs in CI, not the stop gate.
@@ -48,7 +48,7 @@ file_count=$(echo "$mobile_files" | wc -l | tr -d ' ')
 #
 # Staleness pivot must be **mobile-only**. Earlier versions used `edited_files`
 # mtime as the pivot, but that file is appended on every edit including non-
-# mobile work (~/.claude/hooks/, memory files, etc.) — so any later edit
+# mobile work (~/.claude/hooks/, memory files, etc.), so any later edit
 # anywhere in the repo invalidated a fresh mobile dispatch marker. Real fix:
 # pivot on the most recent per-file edit_count marker that maps to a mobile
 # file currently in `mobile_files`. Per-file markers come from
@@ -83,7 +83,7 @@ done <<< "$mobile_files"
 
 # Pass when there's a marker AND it's at or newer than the latest mobile edit.
 # When `latest_mobile_edit=0` (no per-file marker for any listed mobile file in
-# this session — typical when files were edited in a prior session and only
+# this session, typical when files were edited in a prior session and only
 # carry over via `edited_files`), trust the dispatch marker alone: the listed
 # files weren't touched this session, so a marker dated to *any* prior dispatch
 # this session covers them.
@@ -107,6 +107,6 @@ EOF
 
 state_hash="review:$(printf '%s' "$mobile_files" | shasum | awk '{print $1}')"
 # pbcopy a templated skip invocation with inline valid-reason hints. Same
-# shape as codex-stop-gate's review_bypass — caller pastes and edits REASON.
+# shape as codex-stop-gate's review_bypass; caller pastes and edits REASON.
 mobile_pattern_bypass="echo 'REASON: type-only|comment-fix|trivial' > ${gate_dir}/skip_mobile_pattern_gate"
 emit_stop_block_dedupe "mobile_pattern" "$gate_dir" "$state_hash" "$reason_text" "$mobile_pattern_bypass"

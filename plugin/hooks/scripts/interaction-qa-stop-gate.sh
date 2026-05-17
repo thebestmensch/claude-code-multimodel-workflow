@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stop hook — blocks completion when interaction-related code was edited without interaction QA.
+# Stop hook: blocks completion when interaction-related code was edited without interaction QA.
 # Platform-aware: web pseudo-classes/transitions, RN touch handlers.
 set -o pipefail
 
@@ -47,7 +47,7 @@ all_hits=$(printf '%s\n%s\n' "$web_hits" "$mobile_hits" | grep -v '^$' | sort -u
 
 hit_count=$(echo "$all_hits" | wc -l | tr -d ' ')
 
-reason_text="🚫 STOP — ${hit_count} file(s) with interaction patterns edited without interaction QA.
+reason_text="🚫 STOP: ${hit_count} file(s) with interaction patterns edited without interaction QA.
 
 Files:
 ${all_hits}

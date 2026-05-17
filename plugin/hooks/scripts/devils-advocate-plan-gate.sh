@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hook — Devils Advocate Plan Gate (PreToolUse on ExitPlanMode)
+# Hook: Devils Advocate Plan Gate (PreToolUse on ExitPlanMode)
 # Blocks ExitPlanMode on non-trivial plans until devils-advocate has been dispatched.
 # Complexity gate: plan has 3+ numbered tasks OR length > 600 chars.
 # Bypass: touch /tmp/cc-gates/$SESSION/skip_devils_advocate

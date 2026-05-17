@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hook — parallel CC session warn (SessionStart)
+# Hook: parallel CC session warn (SessionStart)
 # Detects when another Claude Code session already has the same git working
 # tree as cwd, so we spin up a worktree before HEAD/index collisions bite.
 # Emits a warning to stdout (captured as additionalContext). Never blocks.
@@ -11,14 +11,14 @@ cat >/dev/null 2>&1 || true
 cwd=$(pwd -P)
 [ -z "$cwd" ] && exit 0
 
-# Only warn inside git repos — non-git cwds can't collide on HEAD.
+# Only warn inside git repos; non-git cwds can't collide on HEAD.
 git -C "$cwd" rev-parse --git-dir >/dev/null 2>&1 || exit 0
 
 toplevel=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)
 [ -z "$toplevel" ] && exit 0
 
 # Walk every running Claude Code process. The CC binary's process name is
-# `2.1.111` (versioned binary), not `claude` — `pgrep -x claude` returns
+# `2.1.111` (versioned binary), not `claude`; `pgrep -x claude` returns
 # nothing. Match the install-path substring instead.
 # Sibling worktrees have distinct toplevels, so they are NOT flagged.
 sibling_count=0
@@ -55,7 +55,7 @@ EOF
 # Auto-fetch + show incoming commits so this session sees what parallel
 # sessions are shipping (closes the gap that recurred 2026-05-06: spec doc
 # drafted into a path that another session had just merged via PR #33).
-# 3s timeout — fail silently on offline/slow networks rather than blocking.
+# 3s timeout: fail silently on offline/slow networks rather than blocking.
 if [ -n "$branch" ] && [ "$branch" != "HEAD" ]; then
   if (cd "$toplevel" && timeout 3 git fetch origin "$branch" --quiet) 2>/dev/null; then
     ahead_behind=$(git -C "$toplevel" rev-list --left-right --count "HEAD...origin/$branch" 2>/dev/null)

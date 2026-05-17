@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PreToolUse Bash gate — hard-blocks the 3rd Codex adversarial-review
+# PreToolUse Bash gate: hard-blocks the 3rd Codex adversarial-review
 # dispatch against the same edit batch (cap = 2).
 #
 # Pattern this catches (per feedback_codex_loop_scope_mismatch.md):
@@ -20,7 +20,7 @@
 # (feedback_counter_scope_freshness_marker.md). Per-session counter would
 # falsely cap multi-task sessions.
 #
-# `review` (gentler) is NOT counted — only adversarial. The motivation is
+# `review` (gentler) is NOT counted; only adversarial. The motivation is
 # adversarial's higher per-dispatch cost AND the loop pattern only being
 # observed empirically against adversarial.
 set -o pipefail
@@ -30,7 +30,7 @@ command=$(echo "$input" | jq -r '.tool_input.command // empty')
 
 # Fast path: not an adversarial-review dispatch. The matcher must be precise
 # enough to avoid catching unrelated commands that happen to mention the
-# string — codex-companion.mjs path with adversarial-review subcommand.
+# string. The codex-companion.mjs path with adversarial-review subcommand.
 case "$command" in
   *codex-companion.mjs*\ adversarial-review*) ;;
   *) exit 0 ;;
@@ -46,14 +46,14 @@ counter_file="$gate_dir/codex_adversarial_count"
 edited_file="$gate_dir/edited_files"
 
 # Per-edit-batch reset: new edits since last counted dispatch → fresh budget.
-# When edited_file is missing, can't compare — leave counter as-is (fresh
+# When edited_file is missing, can't compare; leave counter as-is (fresh
 # session has count=0 anyway).
 if [ -f "$counter_file" ] && [ -f "$edited_file" ] && [ "$edited_file" -nt "$counter_file" ]; then
   rm -f "$counter_file"
 fi
 
-# Read counter (default 0; treat malformed as 0 to fail open, not closed —
-# this gate exists to slow down loops, not to block on bookkeeping bugs).
+# Read counter (default 0; treat malformed as 0 to fail open, not closed.
+# This gate exists to slow down loops, not to block on bookkeeping bugs).
 count=0
 if [ -f "$counter_file" ]; then
   raw=$(cat "$counter_file" 2>/dev/null || echo 0)
@@ -80,18 +80,18 @@ pbcopy_bypass "$reset_cmd"
 
 reason_text="🚫 Codex adversarial-review CAP reached (2 dispatches against this edit batch).
 
-Per \`feedback_codex_loop_scope_mismatch.md\` — when each adversarial pass returns a new finding in a different layer of the same root concern, the fix is mis-scoped. Three options:
+Per \`feedback_codex_loop_scope_mismatch.md\`: when each adversarial pass returns a new finding in a different layer of the same root concern, the fix is mis-scoped. Three options:
 
-  (A) Keep iterating fixes — accept widening scope, force-reset the counter
+  (A) Keep iterating fixes: accept widening scope, force-reset the counter
   (B) Merge as-is + follow-up PR for the design work
   (C) Revert this hunk and re-author with proper scope
 
 To force-reset the counter (only after explicit framing decision):
   ${reset_cmd}
 
-(That command is already in your clipboard via pbcopy — paste-run after deciding A/B/C.)
+(That command is already in your clipboard via pbcopy; paste-run after deciding A/B/C.)
 
-The cap auto-resets when new edits land — fresh diff batch = fresh budget."
+The cap auto-resets when new edits land; fresh diff batch = fresh budget."
 
 cat <<EOF
 {

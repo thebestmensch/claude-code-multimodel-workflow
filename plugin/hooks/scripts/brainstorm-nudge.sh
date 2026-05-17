@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hook — UI Skill Nudge (PreToolUse on Edit|Write)
+# Hook: UI Skill Nudge (PreToolUse on Edit|Write)
 # Nudges when editing UI files without prior brainstorming or frontend-design invocation.
 # Fires once at the start of UI work, then again every 8 UI edits as a checkpoint reminder.
 set -o pipefail
@@ -53,7 +53,7 @@ fi
 # Checkpoint nudge: every 8 UI edits, remind about visual QA
 if [ $((count % 8)) -eq 0 ]; then
   nudge="$count UI edits this session."
-  [ ! -f "$gate_dir/visual_qa_dispatched" ] && nudge="$nudge No visual QA dispatched yet — consider /visual-qa at this checkpoint."
+  [ ! -f "$gate_dir/visual_qa_dispatched" ] && nudge="$nudge No visual QA dispatched yet; consider /visual-qa at this checkpoint."
   [ ! -f "$gate_dir/frontend_design_dispatched" ] && nudge="$nudge frontend-design skill was never invoked."
 
   cat <<EOF

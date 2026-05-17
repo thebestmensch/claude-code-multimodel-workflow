@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bash-mediated edit gap closure — augments gate_dir/edited_files with files
+# Bash-mediated edit gap closure: augments gate_dir/edited_files with files
 # git knows about but PostToolUse Edit|Write tracking missed.
 #
 # Why: track-edited-files.sh only fires on Edit|Write tools. Mutations via
@@ -21,7 +21,7 @@
 #
 # Repo discovery: uses $PWD. Hooks run with cwd inherited from the user's
 # Claude session, which is typically the project root. If git rev-parse fails
-# (not in a repo), this is a no-op — same fail-soft behavior as the existing
+# (not in a repo), this is a no-op; same fail-soft behavior as the existing
 # tracker.
 #
 # Performance: git diff --name-only is O(staged-files) and reliably <100ms
@@ -36,7 +36,7 @@ mode="${2:-cached}"
 [ -d "$gate_dir" ] || exit 0
 
 # Bail if not in a git repo (e.g. user is committing nothing in particular,
-# or PWD landed somewhere unusual). Quietly — don't pollute hook stdout.
+# or PWD landed somewhere unusual). Quietly, don't pollute hook stdout.
 git rev-parse --git-dir >/dev/null 2>&1 || exit 0
 
 case "$mode" in
@@ -45,11 +45,11 @@ case "$mode" in
   *) exit 0 ;;
 esac
 
-# In worktree mode, also include untracked files — `git diff --name-only HEAD`
+# In worktree mode, also include untracked files. `git diff --name-only HEAD`
 # reports tracked changes only, so a `tee > new_file.py` or generator that
 # creates a brand-new file is invisible. Merging `ls-files --others
 # --exclude-standard` covers that. (Closes Codex round-1 medium #2 on this
-# diff — see commit history.)
+# diff; see commit history.)
 include_untracked=0
 if [ "$mode" = "worktree" ]; then
   include_untracked=1
@@ -81,7 +81,7 @@ session_start_marker="$gate_dir/.session_start"
 
 # Mtime filter applies ONLY in worktree mode (Stop-time augmentation). In
 # cached mode, files are *about to ship* via `git commit` regardless of when
-# they were edited — the codex-pre-commit-gate must see all staged code paths
+# they were edited; the codex-pre-commit-gate must see all staged code paths
 # or pre-existing dirty files become a silent bypass surface (Codex finding
 # #1, 2026-05-08). Keep the filter strictly worktree-scoped: the runaway
 # false-positive that motivated the marker only happens when the augmenter
@@ -95,7 +95,7 @@ fi
 filter_and_emit() {
   while IFS= read -r -d '' path; do
     [ -z "$path" ] && continue
-    # Skip directory entries — `git ls-files --others` reports untracked dirs
+    # Skip directory entries: `git ls-files --others` reports untracked dirs
     # (registered worktrees under .claude/worktrees/, vendor caches, etc.) with
     # a trailing slash. They're not files-to-review; they're false positives.
     case "$path" in

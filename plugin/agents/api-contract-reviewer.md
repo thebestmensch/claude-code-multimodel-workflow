@@ -1,6 +1,6 @@
 ---
 name: api-contract-reviewer
-description: Check backend API changes against frontend consumers for contract drift — missing fields, changed response shapes, renamed endpoints. Use when API route handlers or response schemas change in a project with a frontend/mobile consumer.
+description: Check backend API changes against frontend consumers for contract drift: missing fields, changed response shapes, renamed endpoints. Use when API route handlers or response schemas change in a project with a frontend/mobile consumer.
 model: opus
 effort: high
 tools:
@@ -22,8 +22,8 @@ Read the project's CLAUDE.md first for context on the tech stack, API patterns, 
 From the git diff, extract:
 - Changed endpoint paths (new, renamed, or removed routes)
 - Changed HTTP methods
-- Changed request parameters (query, path, body) — new required fields, removed fields, type changes
-- Changed response shapes — added/removed/renamed fields, type changes, changed nesting
+- Changed request parameters (query, path, body): new required fields, removed fields, type changes
+- Changed response shapes: added/removed/renamed fields, type changes, changed nesting
 - Changed status codes or error response formats
 - Changed auth requirements (new auth middleware, removed public access)
 
@@ -62,10 +62,10 @@ For every consumer of a changed endpoint:
 ### 4. Check Generated Contracts
 
 If the project uses contract generation:
-- OpenAPI/Swagger specs — is the spec regenerated?
-- Generated TypeScript clients — do they need rebuilding?
-- Shared type packages — are they updated and published?
-- API documentation — does it reflect the changes?
+- OpenAPI/Swagger specs: is the spec regenerated?
+- Generated TypeScript clients: do they need rebuilding?
+- Shared type packages: are they updated and published?
+- API documentation: does it reflect the changes?
 
 ### 5. Language-Specific Patterns
 

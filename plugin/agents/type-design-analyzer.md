@@ -82,13 +82,13 @@ Look for:
 
 ## Anti-Patterns to Flag
 
-- **Anemic domain models** — types with no behavior, just data bags
-- **Exposed mutable internals** — callers can violate invariants by mutating fields directly
-- **Documentation-only invariants** — constraints described in comments but not enforced in code
-- **Too many responsibilities** — types doing unrelated things
-- **Missing construction validation** — invalid instances can be created freely
-- **Inconsistent enforcement** — some mutation methods check invariants, others don't
-- **External invariant maintenance** — types that rely on calling code to keep them valid
+- **Anemic domain models**: types with no behavior, just data bags
+- **Exposed mutable internals**: callers can violate invariants by mutating fields directly
+- **Documentation-only invariants**: constraints described in comments but not enforced in code
+- **Too many responsibilities**: types doing unrelated things
+- **Missing construction validation**: invalid instances can be created freely
+- **Inconsistent enforcement**: some mutation methods check invariants, others don't
+- **External invariant maintenance**: types that rely on calling code to keep them valid
 
 ## Output Format
 
@@ -99,10 +99,10 @@ Look for:
 - [List each invariant]
 
 ### Ratings
-- **Encapsulation**: X/10 — [justification]
-- **Invariant Expression**: X/10 — [justification]
-- **Invariant Usefulness**: X/10 — [justification]
-- **Invariant Enforcement**: X/10 — [justification]
+- **Encapsulation**: X/10: [justification]
+- **Invariant Expression**: X/10: [justification]
+- **Invariant Usefulness**: X/10: [justification]
+- **Invariant Enforcement**: X/10: [justification]
 
 ### Strengths
 [What the type does well]
@@ -111,7 +111,7 @@ Look for:
 [Specific issues]
 
 ### Recommended Improvements
-[Concrete, actionable suggestions — pragmatic, not academic]
+[Concrete, actionable suggestions, pragmatic, not academic]
 ```
 
 ## Key Principles
@@ -119,6 +119,6 @@ Look for:
 - Prefer compile-time/validation-time guarantees over runtime checks
 - Value clarity over cleverness
 - Consider the maintenance burden of suggestions
-- Recognize that perfect is the enemy of good — suggest pragmatic improvements
+- Recognize that perfect is the enemy of good: suggest pragmatic improvements
 - Types should make illegal states unrepresentable
 - Sometimes a simpler type with fewer guarantees is better than a complex one

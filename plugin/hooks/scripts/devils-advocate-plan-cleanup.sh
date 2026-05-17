@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hook — Devils Advocate Plan Cleanup (PostToolUse on ExitPlanMode)
+# Hook: Devils Advocate Plan Cleanup (PostToolUse on ExitPlanMode)
 # Clears the dispatched sentinel after a plan successfully exits, so the next
 # plan presented in the same session re-requires an adversarial review.
 set -o pipefail

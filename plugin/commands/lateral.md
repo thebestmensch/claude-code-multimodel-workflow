@@ -4,16 +4,16 @@ effort: medium
 disable-model-invocation: false
 ---
 
-Break through stagnation with five lateral-thinking personas. Each persona is a different mode of thinking — they run in parallel, each returns a single reframe, the user picks.
+Break through stagnation with five lateral-thinking personas. Each persona is a different mode of thinking; they run in parallel, each returns a single reframe, the user picks.
 
-This is the multi-perspective extension of `/devils-advocate` (which is one voice). Use `/lateral` when one voice isn't enough — when you're stuck, when assumptions need a full audit, when you're not sure what *kind* of unstuck you need.
+This is the multi-perspective extension of `/devils-advocate` (which is one voice). Use `/lateral` when one voice isn't enough: when you're stuck, when assumptions need a full audit, when you're not sure what *kind* of unstuck you need.
 
 ## Arguments
 
-`$ARGUMENTS` — one of:
+`$ARGUMENTS` is one of:
 - A short statement of what you're stuck on (e.g., "tests pass locally but fail in CI and I've tried three migration approaches")
 - A file path to a design/plan that feels off
-- Empty — main session uses the last 5–10 turns of conversation as the stuck-context
+- Empty (main session uses the last 5–10 turns of conversation as the stuck-context)
 
 ## Process
 
@@ -22,7 +22,7 @@ This is the multi-perspective extension of `/devils-advocate` (which is one voic
    - If `$ARGUMENTS` is text → use it directly
    - If empty → summarize the last 5–10 turns into a one-paragraph stuck-statement
 
-2. **Announce**: one line — "Dispatching 5 lateral personas in parallel: hacker, researcher, simplifier, architect, contrarian."
+2. **Announce**: one line. "Dispatching 5 lateral personas in parallel: hacker, researcher, simplifier, architect, contrarian."
 
 3. **Dispatch 5 parallel `Agent` calls in a single message** with `subagent_type: "general-purpose"`, `run_in_background: false`. Each agent gets the stuck-statement plus its persona prompt below. Pass the persona name in `description` so the HUD labels them.
 
@@ -71,7 +71,7 @@ This is the multi-perspective extension of `/devils-advocate` (which is one voic
 >
 > Return exactly three lines:
 > - **Reframe (one sentence):** if we started over now, what shape would the solution take?
-> - **First action (one structural change — boundary, layer, or data flow — to draft):**
+> - **First action (one structural change to draft: boundary, layer, or data flow):**
 > - **What this trades away:** how much already-done work gets thrown out?
 
 ### contrarian
@@ -102,7 +102,7 @@ After the 5 agents return, render this table and stop:
 | architect | ... | ... | ... |
 | contrarian | ... | ... | ... |
 
-**Recommendation:** [one line — which reframe seems most load-bearing given the stuck-context, and why. Optional; user decides.]
+**Recommendation:** [one line. Which reframe seems most load-bearing given the stuck-context, and why. Optional; user decides.]
 ```
 
 Then: write `/tmp/cc-gates/$SESSION_ID/lateral_dispatched` so the stuck-detector hook stops nudging this round.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hook — SDD Review Gate (PreToolUse on TaskUpdate)
+# Hook: SDD Review Gate (PreToolUse on TaskUpdate)
 # Blocks marking a task as completed unless BOTH spec review and code review
 # have been dispatched since the last implementer. Also blocks if UI files
 # were edited without visual QA.
@@ -17,7 +17,7 @@ session_id=$(echo "$input" | jq -r '.session_id // empty')
 gate_dir="/tmp/cc-gates/$session_id"
 [ -d "$gate_dir" ] || exit 0
 
-# Per-gate escape hatch — requires a non-empty reason string.
+# Per-gate escape hatch: requires a non-empty reason string.
 # Usage: echo "reason here" > /tmp/cc-gates/<session>/skip_sdd_gate
 if [ -f "$gate_dir/skip_sdd_gate" ]; then
   reason=$(cat "$gate_dir/skip_sdd_gate" | tr -d '[:space:]')
@@ -26,7 +26,7 @@ if [ -f "$gate_dir/skip_sdd_gate" ]; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') | sdd-review-gate | $(cat "$gate_dir/skip_sdd_gate")" >> "$gate_dir/bypass_log.txt"
     exit 0
   fi
-  # Empty file (bare touch) — reject and explain
+  # Empty file (bare touch): reject and explain
   cat <<EOF
 {
   "hookSpecificOutput": {

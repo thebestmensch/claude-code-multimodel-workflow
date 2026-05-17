@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PostToolUse hook (Bash) — touches Codex dispatch markers when a Bash command
+# PostToolUse hook (Bash), touches Codex dispatch markers when a Bash command
 # successfully invokes the codex-companion.mjs review/adversarial-review/task/
 # result helpers. The /codex:* slash commands are user-only
 # (disable-model-invocation: true), so the model dispatches Codex by calling
@@ -7,23 +7,23 @@
 # codex-stop-gate the dispatch (and/or retrieval) happened.
 #
 # Three markers, by design:
-#   codex_diff_dispatched — set ONLY when a `review` / `adversarial-review`
+#   codex_diff_dispatched, set ONLY when a `review` / `adversarial-review`
 #                           runs (sync OR background dispatch). mtime =
 #                           "moment dispatch started." `result` retrieval does
-#                           NOT touch this marker — orphan retrieval (dispatch
+#                           NOT touch this marker, orphan retrieval (dispatch
 #                           in a prior session) must NOT fake dispatch in the
 #                           current session, or it would silently certify the
 #                           current session's unreviewed edits.
-#   codex_diff_handled    — set when review results LAND in model context:
+#   codex_diff_handled   , set when review results LAND in model context:
 #                           sync review (stdout has header) OR `result`
 #                           retrieval (stdout has header). Background-only
-#                           dispatch leaves this UNSET — the gate stays armed
+#                           dispatch leaves this UNSET, the gate stays armed
 #                           until `result` retrieves the findings.
 #                           Stop-gate releases only when BOTH _dispatched
 #                           AND _handled are fresher than the most recent
 #                           edit (prevents the edit→dispatch→edit→result
 #                           stale-certification path).
-#   codex_plan_dispatched — set on `task` (used by codex:codex-rescue subagent
+#   codex_plan_dispatched, set on `task` (used by codex:codex-rescue subagent
 #                           for plan-mode / diagnosis review pre-impl).
 #                           Informational only; does not satisfy the stop gate.
 #
@@ -40,10 +40,10 @@
 # stdout for long-running invocations. Requiring stdout would silently miss
 # legitimate dispatches.
 #
-# `_handled` still requires the review-result header — it certifies that the
+# `_handled` still requires the review-result header, it certifies that the
 # review TEXT landed in the model's context, not just that dispatch happened.
 #
-# Silent bookkeeper — no output.
+# Silent bookkeeper, no output.
 set -o pipefail
 
 input=$(cat)
@@ -74,12 +74,12 @@ gate_dir="${CC_GATE_DIR_BASE:-/tmp/cc-gates}/$session_id"
 [ -d "$gate_dir" ] || mkdir -p "$gate_dir"
 
 # Match codex-companion.mjs invocations and route to the appropriate marker.
-# `setup`, `status`, `cancel` are plumbing — never satisfy the gate.
+# `setup`, `status`, `cancel` are plumbing, never satisfy the gate.
 #
 # adversarial-review and review are split into two case branches: both touch
 # the same dispatch/handled markers, but only adversarial increments the
 # loop-scope cap counter (codex_adversarial_count, read by
-# codex-adversarial-cap.sh). The gentler `review` is exempt — the loop
+# codex-adversarial-cap.sh). The gentler `review` is exempt, the loop
 # pattern documented in feedback_codex_loop_scope_mismatch.md is empirically
 # adversarial-only, and the cap exists to break that specific loop.
 case "$command" in
@@ -111,11 +111,11 @@ case "$command" in
     # `result` invocations that returned non-review content (status-only output
     # from `result` for plan-mode tasks would lack the review header).
     #
-    # Only `_handled` is touched here — never `_dispatched`. `_dispatched`
+    # Only `_handled` is touched here, never `_dispatched`. `_dispatched`
     # mtime is reserved for "moment dispatch started" so the stop-gate can
     # require dispatch-time > most-recent-edit. Orphan retrieval (no prior
     # dispatch in this session) leaves `_dispatched` absent, which makes the
-    # gate block — exactly the right outcome (closes stale-certification
+    # gate block, exactly the right outcome (closes stale-certification
     # bug: `result` alone must not satisfy the gate for unreviewed edits).
     if [ "$has_review_header" = "1" ]; then
       touch "$gate_dir/codex_diff_handled"

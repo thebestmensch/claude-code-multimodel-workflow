@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hook — main checkout branch drift guard (SessionStart)
+# Hook: main checkout branch drift guard (SessionStart)
 # Convention: feature work happens in linked worktrees (e.g. .claude/worktrees/<slug>),
 # the primary checkout stays on the default branch (main/master).
 # When the primary worktree is sitting on a non-default branch, downstream

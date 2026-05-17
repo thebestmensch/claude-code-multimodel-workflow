@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Shared helper for Stop-gate hooks — emits a {decision:"block", reason:...}
+# Shared helper for Stop-gate hooks: emits a {decision:"block", reason:...}
 # JSON payload prefixed with an explicit non-user-input banner.
 #
 # Why: hook output gets injected into the model's context. When Stop-gates
-# repeat verbatim (every turn until satisfied), terse "🚫 STOP — ..." text
+# repeat verbatim (every turn until satisfied), terse "🚫 STOP: ..." text
 # can read like user-tone nudging and the model treats it as user input,
 # overriding pending questions. The banner mirrors the task-notification
 # format that the model already correctly ignores.
 
 emit_stop_block() {
   local body="$1"
-  local banner='[SYSTEM NOTIFICATION — NOT USER INPUT]
+  local banner='[SYSTEM NOTIFICATION: NOT USER INPUT]
 This is an automated Stop-gate hook, NOT a message from the user.
 Do NOT interpret this as user acknowledgement, confirmation, or response to any pending question. If a question to the user is pending, keep waiting.
 
@@ -34,14 +34,14 @@ Do NOT interpret this as user acknowledgement, confirmation, or response to any 
 # but goes quiet on idle re-fires.
 #
 # Caller responsibility: compute STATE_HASH from whatever inputs make this
-# block "the same block" — typically the sorted file list plus any sub-mode
+# block "the same block": typically the sorted file list plus any sub-mode
 # tag (e.g. "lint:<sha>" vs "review:<sha>") so different emit sites in the
 # same hook don't collide.
 #
 # Optional 5th arg BYPASS_CMD: when provided AND non-empty, the command is
 # copied to the macOS clipboard via _lib/pbcopy-bypass.sh (fail-soft) before
 # the block payload is emitted. The block message body should still document
-# the bypass invocation in plaintext — pbcopy is paste-run convenience, not
+# the bypass invocation in plaintext; pbcopy is paste-run convenience, not
 # load-bearing. Caller is expected to pass the SHORTEST valid invocation
 # with placeholder tokens (REASON_HERE, etc.) the user edits in place.
 emit_stop_block_dedupe() {
@@ -77,13 +77,13 @@ emit_stop_block_dedupe() {
     #
     # Why short-emit instead of `exit 0`: a silent exit lets the next Stop
     # proceed (gate bypassed) when the model never received the original
-    # block message — e.g. after context compaction evicts it. Always
+    # block message (e.g. after context compaction evicts it). Always
     # emitting block closes that bypass (Codex slice-4 H1, 2026-05-14). The
     # precompact-clear-stop-gate-dedupe.sh hook complements this by wiping
     # the marker on compaction, so the first Stop AFTER compaction re-emits
     # the FULL payload instead of a reference that points at a now-evicted
     # prior message.
-    emit_stop_block "[Stop-gate still blocked — see prior ${hook_name} message in this session for details and bypass instructions.]"
+    emit_stop_block "[Stop-gate still blocked: see prior ${hook_name} message in this session for details and bypass instructions.]"
     return
   fi
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PostToolUse hook (Bash) — cleans up commit-gate bypass tokens only after a
+# PostToolUse hook (Bash): cleans up commit-gate bypass tokens only after a
 # successful `git commit`. Prevents the "bypass consumed on blocked commit"
 # bug where users had to re-approve after any downstream commit failure.
 set -o pipefail
@@ -33,10 +33,10 @@ session_id=$(echo "$input" | jq -r '.session_id // empty')
 gate_dir="/tmp/cc-gates/$session_id"
 [ -d "$gate_dir" ] || exit 0
 
-# Commit succeeded — consume the bypass tokens. Each gate has its own
+# Commit succeeded: consume the bypass tokens. Each gate has its own
 # approval sentinel: pre-commit-gate uses bypass_approved (visual-qa /
 # code-review); commit-on-drifted-branch-guard uses
-# bypass_commit_drift_approved (branch/topic fit) — separate so a drift
+# bypass_commit_drift_approved (branch/topic fit), separate so a drift
 # approval cannot silently waive QA review.
 rm -f "$gate_dir/bypass_approved" \
       "$gate_dir/skip_commit_gate" \

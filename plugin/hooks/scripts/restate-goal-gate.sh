@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hook — Restate Goal Gate (PreToolUse on Bash)
+# Hook: Restate Goal Gate (PreToolUse on Bash)
 # Before the FIRST irreversible/destructive command in a session, requires the
 # main session to restate the goal and explicitly mark approval.
 # Pattern borrowed from ouroboros: restate-gate before seed/execute handoff.
@@ -51,7 +51,7 @@ while IFS= read -r seg; do
   seg=$(printf "%s" "$seg" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')
   [ -z "$seg" ] && continue
 
-  # git push — destructive UNLESS this specific invocation has --dry-run
+  # git push: destructive UNLESS this specific invocation has --dry-run
   if printf "%s" "$seg" | grep -qE '(^|[[:space:]])git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+push([[:space:]]|$)'; then
     if ! printf "%s" "$seg" | grep -qE '(^|[[:space:]])--dry-run([[:space:]]|$)'; then
       is_destructive=1; matched="git push"; break
@@ -88,7 +88,7 @@ done <<<"$segments"
 
 [ "$is_destructive" -eq 0 ] && exit 0
 
-reason="First destructive action this session: ${matched:-unknown}. Restate-goal gate (ouroboros pattern): before irreversible work, restate (a) the goal in one sentence and (b) the blast radius / risk in one sentence. Then explicitly approve by running: touch $gate_dir/goal_restated — and retry the command. After approval, the rest of the session is unblocked. Bypass without restate: touch $gate_dir/skip_restate_gate (only when the destructive action is itself the entire goal, e.g. user said 'force-push the fix')."
+reason="First destructive action this session: ${matched:-unknown}. Restate-goal gate (ouroboros pattern): before irreversible work, restate (a) the goal in one sentence and (b) the blast radius / risk in one sentence. Then explicitly approve by running: touch $gate_dir/goal_restated, and retry the command. After approval, the rest of the session is unblocked. Bypass without restate: touch $gate_dir/skip_restate_gate (only when the destructive action is itself the entire goal, e.g. user said 'force-push the fix')."
 
 cat <<EOF
 {

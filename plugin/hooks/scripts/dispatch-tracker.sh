@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Dispatch Tracker (PostToolUse on Agent|Skill)
 # Tracks when review agents/skills are dispatched by touching marker files
-# under /tmp/cc-gates/$session_id/. Silent bookkeeper — no output.
+# under /tmp/cc-gates/$session_id/. Silent bookkeeper; no output.
 # Other gate hooks (visual-qa-stop-gate, codex-stop-gate, etc.) read these
 # markers to decide whether the required review fired before stop.
 set -o pipefail
@@ -36,7 +36,7 @@ if [ "$tool_name" = "Agent" ]; then
   case "$desc" in
     *sentry-discipline*|*sentry\ discipline*) touch "$gate_dir/sentry_review_dispatched" ;;
   esac
-  # Codex cross-provider review (added 2026-05-04) — Agent dispatches by
+  # Codex cross-provider review (added 2026-05-04): Agent dispatches by
   # description set the *plan* marker, not the diff marker, because the
   # rescue subagent forwards to `codex-companion.mjs task` internally (plan-
   # mode / diagnosis path). Diff review goes through Bash review/adversarial-

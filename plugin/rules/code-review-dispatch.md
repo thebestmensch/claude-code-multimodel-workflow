@@ -1,23 +1,23 @@
 # Code Review Dispatch
 
-**CodeRabbit reviews PRs externally** — it covers general code quality, security, and the territory of the universal supplementary agents (silent-failure, type-design, api-contract, concurrency, test-gap, sentry-discipline) at merge time. In-session auto-dispatch is reserved for **project-specific reviewers** that catch footguns CodeRabbit can't.
+**CodeRabbit reviews PRs externally.** It covers general code quality, security, and the territory of the universal supplementary agents (silent-failure, type-design, api-contract, concurrency, test-gap, sentry-discipline) at merge time. In-session auto-dispatch is reserved for **project-specific reviewers** that catch footguns CodeRabbit can't.
 
-**Always announce.** One line — which reviewers fire, or that you're skipping and why. Silent skipping is the failure mode this rule catches.
+**Always announce.** One line: which reviewers fire, or that you're skipping and why. Silent skipping is the failure mode this rule catches.
 
 ## When to Auto-Dispatch
 
-**Mandatory auto-dispatch (pre-commit) — project-specific reviewers only:**
+**Mandatory auto-dispatch (pre-commit), project-specific reviewers only:**
 - After completing a feature or bug fix (before commit)
 - Before merge to main
 - After each task in subagent-driven development
 
-The auto-firing reviewers come from the workspace's `code-review-*.md` overlay (e.g., your project's `code-review-<project>.md`). The base lensed review and the universal supplementary agents do **not** auto-fire — CodeRabbit owns that turf at PR time.
+The auto-firing reviewers come from the workspace's `code-review-*.md` overlay (e.g., your project's `code-review-<project>.md`). The base lensed review and the universal supplementary agents do **not** auto-fire; CodeRabbit owns that turf at PR time.
 
 **Non-code feature work** (runbook updates, slash-command rewrites, design-doc implementations): if the `superpowers` plugin is installed, invoke the `superpowers:requesting-code-review` skill, which dispatches `Task (general-purpose)` with the reviewer persona/checklist from `superpowers:requesting-code-review/code-reviewer.md`. Without superpowers, dispatch a `general-purpose` agent with an explicit reviewer prompt instead. Pass the spec/plan as context. Skip outright only for trivial doc edits. (The legacy `superpowers:code-reviewer` named agent was removed in superpowers v5.1.0.)
 
 ## Explicit `/code-review` (opt-in)
 
-When you want pre-PR coverage of the territory CodeRabbit also reviews — sanity-check before push, or unsure if CR will catch a subtle case:
+When you want pre-PR coverage of the territory CodeRabbit also reviews (sanity-check before push, or unsure if CR will catch a subtle case):
 
 ```
 Skill("code-review")                     # auto-detects lenses, runs base review
@@ -34,8 +34,8 @@ These do NOT auto-fire pre-commit. They run only when `/code-review` is invoked 
 
 Each reviewer gets the same diff scope, derived from when the dispatch fires:
 
-- **Pre-commit (auto-dispatch)** — work is in the working tree (and possibly the staged index) but not yet committed. Scope reviewers to `git diff` + `git diff --cached` (and any untracked files you added). Do NOT use a `BASE_SHA..HEAD_SHA` range here — it will be empty or stale.
-- **Post-commit / pre-push / pre-merge** — work is on a branch above the merge base. Scope reviewers to `git diff {BASE_SHA}..{HEAD_SHA}` where `BASE_SHA` is the merge base with the target branch.
+- **Pre-commit (auto-dispatch)**: work is in the working tree (and possibly the staged index) but not yet committed. Scope reviewers to `git diff` + `git diff --cached` (and any untracked files you added). Do NOT use a `BASE_SHA..HEAD_SHA` range here; it will be empty or stale.
+- **Post-commit / pre-push / pre-merge**: work is on a branch above the merge base. Scope reviewers to `git diff {BASE_SHA}..{HEAD_SHA}` where `BASE_SHA` is the merge base with the target branch.
 
 Use `model="sonnet"`, `run_in_background=true`.
 
@@ -48,7 +48,7 @@ Use `model="sonnet"`, `run_in_background=true`.
 - Minor -> note for user, fix if trivial
 - Lens-tagged findings (`[security]`, `[data-integrity]`) often highest-value
 
-If a reviewer flags something you disagree with, push back with technical reasoning — don't blindly implement.
+If a reviewer flags something you disagree with, push back with technical reasoning. Don't blindly implement.
 
 ## Boundary
 

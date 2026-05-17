@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stop hook — blocks completion when backend files edited without observed runtime verification.
+# Stop hook: blocks completion when backend files edited without observed runtime verification.
 # Evidence-based: releases only when a verifying Bash command ran AFTER the most recent edit.
 # (See track-verify-commands.sh for what counts as verification.)
 set -o pipefail
@@ -14,7 +14,7 @@ edited_file="$gate_dir/edited_files"
 # Nothing edited → nothing to gate
 [ -f "$edited_file" ] || exit 0
 
-# Reasoned bypass — requires a written justification (not just a bare touch)
+# Reasoned bypass: requires a written justification (not just a bare touch)
 if [ -f "$gate_dir/skip_backend_gate" ]; then
   reason=$(tr -d '[:space:]' < "$gate_dir/skip_backend_gate")
   if [ -n "$reason" ]; then
@@ -39,7 +39,7 @@ fi
 
 file_count=$(echo "$backend_files" | wc -l | tr -d ' ')
 
-reason_text="🚫 STOP — ${file_count} backend file(s) were edited without observed runtime verification.
+reason_text="🚫 STOP: ${file_count} backend file(s) were edited without observed runtime verification.
 
 Files:
 ${backend_files}
@@ -51,7 +51,7 @@ Any of these counts as evidence and will release the gate automatically:
   • playwright / just visual-test
   • ssh <host> docker exec ...
 
-Do NOT claim 'tests should pass' or 'this should work' without running it. The gate is evidence-based — it observes your Bash activity, not a touchfile.
+Do NOT claim 'tests should pass' or 'this should work' without running it. The gate is evidence-based: it observes your Bash activity, not a touchfile.
 
 To bypass (logged and surfaced in retros), write a reason:
   echo 'reason here' > ${gate_dir}/skip_backend_gate"

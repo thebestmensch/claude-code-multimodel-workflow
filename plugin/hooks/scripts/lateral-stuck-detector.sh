@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hook — Lateral Stuck Detector
+# Hook: Lateral Stuck Detector
 # Two trigger surfaces:
 #   1. UserPromptSubmit: detects frustration keywords in user prompt
 #   2. PostToolUse(Edit|Write): detects 4+ edits to the same file in this session
@@ -17,7 +17,7 @@ mkdir -p "$gate_dir"
 # Once /lateral has fired this session, stop nudging (cap = 1 per session).
 [ -f "$gate_dir/lateral_dispatched" ] && exit 0
 
-# Cooldown — at most one nudge per 5 user prompts to avoid spam.
+# Cooldown: at most one nudge per 5 user prompts to avoid spam.
 nudge_count_file="$gate_dir/lateral_nudge_count"
 last_nudge_file="$gate_dir/lateral_nudge_last_prompt"
 
@@ -25,14 +25,14 @@ hook_event=$(echo "$input" | jq -r '.hook_event_name // empty')
 
 case "$hook_event" in
   UserPromptSubmit)
-    # Fast-path skip when nudge already emitted this session — atomic claim
+    # Fast-path skip when nudge already emitted this session; atomic claim
     # below handles the race; this just avoids the regex work in the common case.
     [ -f "$gate_dir/lateral_nudge_emitted" ] && exit 0
 
     prompt=$(echo "$input" | jq -r '.prompt // empty' | tr '[:upper:]' '[:lower:]')
     [ -z "$prompt" ] && exit 0
 
-    # Frustration / stuck signals — word-boundary matches only
+    # Frustration / stuck signals (word-boundary matches only)
     stuck=0
     if echo "$prompt" | grep -qwE "(still (broken|failing|not working)|tried (everything|three|3|four|4) times|i'?m stuck|we'?re stuck|stuck on this|can'?t figure (this|it) out|same error again|keeps failing|why doesn'?t this work|this isn'?t working|i give up|nothing works)"; then
       stuck=1
@@ -40,7 +40,7 @@ case "$hook_event" in
 
     [ "$stuck" -eq 0 ] && exit 0
 
-    # Inject context note — UserPromptSubmit hooks emit stdout as context.
+    # Inject context note. UserPromptSubmit hooks emit stdout as context.
     # Atomically claim emission via noclobber so two concurrent hooks cannot
     # both pass the earlier check-then-act window.
     if ( set -o noclobber; : > "$gate_dir/lateral_nudge_emitted" ) 2>/dev/null; then
@@ -86,7 +86,7 @@ case "$hook_event" in
       jq -nc --arg base "$base" '{
         hookSpecificOutput: {
           hookEventName: "PostToolUse",
-          additionalContext: ("Same file edited 4 times this session: \($base). If you keep retrying the same fix shape, consider /lateral — 5 reframing personas in parallel — to break out of the local-minimum approach.")
+          additionalContext: ("Same file edited 4 times this session: \($base). If you keep retrying the same fix shape, consider /lateral (5 reframing personas in parallel) to break out of the local-minimum approach.")
         }
       }'
     fi

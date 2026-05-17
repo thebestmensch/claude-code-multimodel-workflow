@@ -62,8 +62,8 @@ case "$tool" in
   Bash)
     cmd=$(echo "$input" | jq -r '.tool_input.command // empty')
     # Match the rightmost skip token in the command. Order: longer tokens
-    # before potential prefixes (skip_commit_drift_gate before skip_commit_gate
-    # — neither is a substring of the other, but the longer one is listed
+    # before potential prefixes (skip_commit_drift_gate before skip_commit_gate;
+    # neither is a substring of the other, but the longer one is listed
     # first for clarity and forward-compat).
     for tok in skip_gpt_tool_review_gate skip_admin_template_review_gate \
                skip_external_api_review_gate skip_sentry_review_gate \
@@ -106,7 +106,7 @@ case "$target" in
     ok=1
     ;;
   skip_commit_drift_gate)
-    # Branch-drift bypass — purely a routing/topic-match judgment by Claude
+    # Branch-drift bypass: purely a routing/topic-match judgment by Claude
     # (no agent or skill marker maps to it). Deterministic ok=1; the actual
     # block is enforced by commit-on-drifted-branch-guard.sh requiring BOTH
     # this skip file AND user-echoed bypass_approved before allowing commit.

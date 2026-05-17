@@ -32,7 +32,7 @@ const isMobile = /^com\.[a-z]+\.[a-z]+/.test(args);
 
 ### 2. Load Philosophy
 
-Look for `.claude/docs/interaction-qa-philosophy.md` in the current project (fall back to `.claude/rules/interaction-qa-philosophy.md`). If not found, tell the user and proceed with generic evaluation. Read the philosophy file — this gets passed to the QA agent.
+Look for `.claude/docs/interaction-qa-philosophy.md` in the current project (fall back to `.claude/rules/interaction-qa-philosophy.md`). If not found, tell the user and proceed with generic evaluation. Read the philosophy file. This gets passed to the QA agent.
 
 ### 3. Capture Baseline
 

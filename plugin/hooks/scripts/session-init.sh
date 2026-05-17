@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hook 0 — Session Init (UserPromptSubmit)
+# Hook 0: Session Init (UserPromptSubmit)
 # Creates per-session state directory and maintains the 'current' symlink.
 # Prunes sessions older than 24h.
 set -o pipefail
@@ -11,7 +11,7 @@ session_id=$(echo "$input" | jq -r '.session_id // empty')
 
 gate_dir="/tmp/cc-gates/$session_id"
 mkdir -p "$gate_dir"
-# Timestamp marker for augment-edited-files.sh — only files mtime-newer than
+# Timestamp marker for augment-edited-files.sh: only files mtime-newer than
 # this are considered "edited this session" by the worktree augmenter.
 # Pre-existing dirty files from prior sessions stay out of the gate.
 [ -f "$gate_dir/.session_start" ] || touch "$gate_dir/.session_start"

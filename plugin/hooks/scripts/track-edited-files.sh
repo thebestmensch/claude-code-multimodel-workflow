@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PostToolUse hook (Edit|Write) — tracks all files edited during this session.
+# PostToolUse hook (Edit|Write): tracks all files edited during this session.
 # The auto-simplify Stop hook reads this list.
 set -o pipefail
 

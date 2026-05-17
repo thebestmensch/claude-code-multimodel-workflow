@@ -3,7 +3,7 @@ description: Symbol-aware ripgrep wrapper. Each hit shows the enclosing function
 effort: low
 ---
 
-Symbol-aware code search. Wraps ripgrep with enclosing-symbol context so each hit shows the function/class/method it lives inside — saves a Read call per hit.
+Symbol-aware code search. Wraps ripgrep with enclosing-symbol context so each hit shows the function/class/method it lives inside, saving a Read call per hit.
 
 > **What it does:** Runs `rg -n <pattern> [path]`, then for each hit walks backward in the file to find the nearest enclosing definition (Python `def`/`class`, JS/TS `function`/`const ... =`/`class`, Rust `fn`/`impl`/`struct`, Go `func`/`type`).
 
@@ -20,7 +20,7 @@ If `[path]` is omitted, search the current working directory.
 
 ## Process
 
-1. **Parse args** from `$ARGUMENTS` — first token is the pattern (quote-aware), rest is the optional path. If no args, prompt the user and stop.
+1. **Parse args** from `$ARGUMENTS`. First token is the pattern (quote-aware), rest is the optional path. If no args, prompt the user and stop.
 
 2. **Run ripgrep** with line numbers and a reasonable cap:
    ```bash
@@ -51,13 +51,13 @@ If `[path]` is omitted, search the current working directory.
 
 ## Implementation notes
 
-- Use `head -n` and `tail -r` (or `awk`) — reading the whole file is wasteful when only the first N lines up to the hit matter
+- Use `head -n` and `tail -r` (or `awk`); reading the whole file is wasteful when only the first N lines up to the hit matter
 - For very large files (>5MB), skip the symbol-context step for that hit and just print the bare ripgrep line (mark with `(symbol-context skipped: large file)`)
-- Respect `.gitignore` (ripgrep does this by default — don't override)
-- Don't try to parse all language constructs — the regex set above covers ~95% of cases. If you can't find a symbol, "(top-level)" is fine
+- Respect `.gitignore` (ripgrep does this by default; don't override)
+- Don't try to parse all language constructs; the regex set above covers ~95% of cases. If you can't find a symbol, "(top-level)" is fine
 
 ## Why this exists
 
 The default Grep tool returns hits without symbol context, so I usually have to Read each file to understand what the hit means. Inspired by jcode's `agentgrep` ([1jehuang/agentgrep](https://github.com/1jehuang/agentgrep)), which adds file-structure info to grep returns specifically so coding agents can infer more without reading the file. This is the same idea, ported to a Claude Code slash command.
 
-If a hit is in a file you've already read this session, the symbol context is redundant — but it's still useful for the hits in unread files.
+If a hit is in a file you've already read this session, the symbol context is redundant, but it's still useful for the hits in unread files.

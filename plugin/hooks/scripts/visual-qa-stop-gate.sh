@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stop hook — blocks completion when UI files were edited without visual QA.
+# Stop hook: blocks completion when UI files were edited without visual QA.
 # Bypassed via visual_qa_dispatched marker (touched by dispatch-tracker when /visual-qa runs)
 # or a reasoned skip_visual_qa_gate file.
 set -o pipefail
@@ -35,12 +35,12 @@ ui_files=$(sort -u "$edited_file" | grep -E 'mobile-app/(components|app|ui|scree
 
 file_count=$(echo "$ui_files" | wc -l | tr -d ' ')
 
-reason_text="🚫 STOP — ${file_count} UI file(s) edited this session without visual QA.
+reason_text="🚫 STOP: ${file_count} UI file(s) edited this session without visual QA.
 
 Files:
 ${ui_files}
 
-Run /visual-qa on the affected screen(s) — screenshot + review.
+Run /visual-qa on the affected screen(s): screenshot + review.
 
 If the changes are truly non-visual (pure refactor, no rendered output change), write a reason:
   echo 'reason' > ${gate_dir}/skip_visual_qa_gate

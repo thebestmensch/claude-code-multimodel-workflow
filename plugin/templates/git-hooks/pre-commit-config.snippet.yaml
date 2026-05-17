@@ -1,4 +1,4 @@
-# pre-commit-config.snippet.yaml — adopter snippet for the pre-commit framework
+# pre-commit-config.snippet.yaml: adopter snippet for the pre-commit framework
 # (https://pre-commit.com). Paste this hook entry into your project's
 # `.pre-commit-config.yaml` under `repos: -> hooks:`.
 #
@@ -9,7 +9,7 @@
 #
 # Mirror `*-linear-new-ticket.md` or `*-linear-status-ticket.md` too?
 # Duplicate this hook entry with a matching `files:` regex and that pair's
-# paths in args. Don't broaden the regex alone — staged new/status files
+# paths in args. Don't broaden the regex alone; staged new/status files
 # would compare against the work-ticket pair and silently pass.
 #
 # Set RUNBOOK_PROJECT_NAMES / RUNBOOK_TICKET_PREFIXES env vars so the drift

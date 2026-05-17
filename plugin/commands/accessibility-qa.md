@@ -20,18 +20,18 @@ Run an accessibility review on a UI page. Evaluates semantic HTML, ARIA, keyboar
    **For URLs (Playwright available):**
 
    - Navigate to the URL with `browser_navigate`
-   - Capture a **DOM snapshot** with `browser_snapshot` — this returns the accessibility tree with roles, labels, and states. This is the primary input for the agent.
-   - Take a **full-page screenshot** with `browser_take_screenshot` (`fullPage: true`) — for visual checks (contrast, focus indicators, spacing)
+   - Capture a **DOM snapshot** with `browser_snapshot`: this returns the accessibility tree with roles, labels, and states. This is the primary input for the agent.
+   - Take a **full-page screenshot** with `browser_take_screenshot` (`fullPage: true`): for visual checks (contrast, focus indicators, spacing)
    - Tab through the page 10-15 times using `browser_press_key` (Tab), taking a screenshot after each to capture focus indicator visibility and tab order
    - If the page has a modal or dropdown, open it and snapshot again
 
    **For file paths:**
    - Use the image directly
-   - DOM structure is unavailable — note this limitation in the dispatch. The agent will evaluate visual accessibility only (contrast, spacing, indicator visibility).
+   - DOM structure is unavailable: note this limitation in the dispatch. The agent will evaluate visual accessibility only (contrast, spacing, indicator visibility).
 
 2. **Load project accessibility notes (if they exist):**
    - Look for `.claude/rules/accessibility-notes.md` in the current project
-   - If not found, proceed with standard WCAG 2.1 AA evaluation — no project-specific notes is fine
+   - If not found, proceed with standard WCAG 2.1 AA evaluation: no project-specific notes is fine
 
 3. **Dispatch the Accessibility QA agent:**
 
@@ -39,7 +39,7 @@ Run an accessibility review on a UI page. Evaluates semantic HTML, ARIA, keyboar
 
    **The agent receives:**
    - The DOM snapshot (accessibility tree with roles, labels, states, heading levels)
-   - Full-page screenshot (**use absolute paths** — subagents run from different working directories)
+   - Full-page screenshot (**use absolute paths**: subagents run from different working directories)
    - Focus indicator screenshots (tab sequence)
    - Optional project accessibility notes
    - The focus area hint if provided
@@ -50,7 +50,7 @@ Run an accessibility review on a UI page. Evaluates semantic HTML, ARIA, keyboar
    - File paths to source code or directory structure
 
 4. **Interpret findings:**
-   - **Filter false positives:** The agent can't see CSS — it may flag contrast issues that are actually fine, or miss dynamic ARIA that's set by JS after interaction. Verify each finding against actual code.
+   - **Filter false positives:** The agent can't see CSS: it may flag contrast issues that are actually fine, or miss dynamic ARIA that's set by JS after interaction. Verify each finding against actual code.
    - Map confirmed findings to specific code locations
    - Present findings to the user grouped by severity
    - For high/medium issues, include your proposed code fix
@@ -62,7 +62,7 @@ Run an accessibility review on a UI page. Evaluates semantic HTML, ARIA, keyboar
 Use this as the subagent prompt. Replace `{ACCESSIBILITY_TREE}`, `{FOCUS_AREA}`, and file paths as needed.
 
 ```
-You are an accessibility reviewer. Your job is to find accessibility barriers in a web interface. You evaluate whether the page can be used by people with disabilities — screen reader users, keyboard-only users, low-vision users, and users with motor impairments.
+You are an accessibility reviewer. Your job is to find accessibility barriers in a web interface. You evaluate whether the page can be used by people with disabilities, screen reader users, keyboard-only users, low-vision users, and users with motor impairments.
 
 You have the page's accessibility tree (DOM snapshot with roles, labels, and states) and screenshots. You do NOT have source code. You evaluate the rendered, interactive state of the page.
 
@@ -91,7 +91,7 @@ Evaluate against WCAG 2.1 Level AA. This is a web application viewed on desktop 
 
 ## Review Protocol
 
-### Phase 1 — Page Structure
+### Phase 1: Page Structure
 
 Before examining individual elements, evaluate the page's structural accessibility:
 
@@ -101,7 +101,7 @@ Before examining individual elements, evaluate the page's structural accessibili
 4. **Skip navigation:** Is there a mechanism to skip repeated navigation and jump to main content?
 5. **Language:** Is the page language set?
 
-### Phase 2 — Interactive Elements
+### Phase 2: Interactive Elements
 
 Examine every interactive element:
 
@@ -128,7 +128,7 @@ Examine every interactive element:
    - Do selection controls use `aria-selected` or `aria-checked`?
    - Do loading states communicate to screen readers? (`aria-busy`, `aria-live`, or status role)
 
-### Phase 3 — Content Accessibility
+### Phase 3: Content Accessibility
 
 1. **Images:**
    - Do meaningful images have alt text that describes their content?
@@ -153,24 +153,24 @@ Examine every interactive element:
 For each issue, report:
 - **Category** (Phase 1, 2, or 3 subcategory)
 - **Location** (describe using element roles and labels from the accessibility tree)
-- **What's wrong** (specific, observable — what's missing or misconfigured)
+- **What's wrong** (specific, observable: what's missing or misconfigured)
 - **Impact** (which users are affected: screen reader, keyboard, low-vision, motor)
 - **Severity**: high (blocks access entirely), medium (degrades experience significantly), low (minor inconvenience or best-practice gap)
 - **WCAG criterion** (e.g., 1.1.1 Non-text Content, 2.1.1 Keyboard, 4.1.2 Name/Role/Value)
 
 ## Accessibility QA Report
 
-### Phase 1 — Page Structure
+### Phase 1: Page Structure
 [structural findings, or "Page structure is sound."]
 
-### Phase 2 — Interactive Elements
+### Phase 2: Interactive Elements
 [interactive element findings]
 
-### Phase 3 — Content Accessibility
+### Phase 3: Content Accessibility
 [content accessibility findings]
 
 ### Summary
-[Count of issues by severity. One sentence on overall accessibility posture — is this page usable with a screen reader? With keyboard only?]
+[Count of issues by severity. One sentence on overall accessibility posture, is this page usable with a screen reader? With keyboard only?]
 ```
 
 ---
@@ -189,7 +189,7 @@ Present as:
 [issues that degrade experience + proposed code fixes]
 
 ### Low
-[best-practice gaps — fix if trivial, otherwise just note]
+[best-practice gaps, fix if trivial, otherwise just note]
 
 **Summary:** N issues (H high, M medium, L low)
 ```

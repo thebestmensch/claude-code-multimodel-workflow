@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>JM's Claude Code Workflow — Flowchart</title>
+<title>JM's Claude Code Workflow: Flowchart</title>
 <style>
   :root {
     --bg: #0e1116;
@@ -32,13 +32,13 @@
 <div class="page">
 
   <h1>JM's Claude Code Workflow</h1>
-  <div class="sub">Flowchart — ticket to memory. Hooks (red hexagons) sit inline on the spine and must clear before forward progress; reject = red retry loop back to prior step. Sidecars branch off and rejoin.</div>
+  <div class="sub">Flowchart: ticket to memory. Hooks (red hexagons) sit inline on the spine and must clear before forward progress; reject = red retry loop back to prior step. Sidecars branch off and rejoin.</div>
 
   <div class="legend">
     <span class="item"><span class="sw" style="background:#1f6feb"></span> intake / terminal</span>
-    <span class="item"><span class="sw" style="background:#388bfd"></span> /command — JM types it</span>
-    <span class="item"><span class="sw" style="background:#39c5d4"></span> /command — Claude auto-invokes</span>
-    <span class="item"><span class="sw" style="background:#a371f7"></span> skill — Claude-invoked</span>
+    <span class="item"><span class="sw" style="background:#388bfd"></span> /command (JM types it)</span>
+    <span class="item"><span class="sw" style="background:#39c5d4"></span> /command (Claude auto-invokes)</span>
+    <span class="item"><span class="sw" style="background:#a371f7"></span> skill (Claude-invoked)</span>
     <span class="item"><span class="sw" style="background:#238636"></span> subagent (background)</span>
     <span class="item"><span class="sw" style="background:#bf8700"></span> external service</span>
     <span class="item"><span class="sw" style="background:#da3633"></span> hook gate (must clear)</span>
@@ -293,7 +293,7 @@
 </svg>
 
   <footer>
-    Gates inline on spine — must clear forward. Red dashed = retry loop back to prior step. Side branches in dashed gray = sidecars (research, devils-advocate, implementer agents, UI QA, release commands). Gold dashed = iteration loops (CodeRabbit, cross-session memory). Memory write is a dashed outcome — not invoked, just what happens. /jm-retro is auto-invoked inside both /jm-precompact and /jm-wrap.
+    Gates inline on spine: must clear forward. Red dashed = retry loop back to prior step. Side branches in dashed gray = sidecars (research, devils-advocate, implementer agents, UI QA, release commands). Gold dashed = iteration loops (CodeRabbit, cross-session memory). Memory write is a dashed outcome, not invoked, just what happens. /jm-retro is auto-invoked inside both /jm-precompact and /jm-wrap.
   </footer>
 
 </div>

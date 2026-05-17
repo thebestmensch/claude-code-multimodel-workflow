@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/schemas/marketplace.json",
   "name": "claude-code-multimodel-workflow",
   "version": "0.2.0",
-  "description": "JM's Claude Code workflow — pre-built dispatch rules, project-aware reviewers, codified discipline patches.",
+  "description": "Claude Code workflow plugin: pre-built dispatch rules, project-aware reviewers, codified discipline patches.",
   "owner": {
     "name": "James Mensch",
     "url": "https://github.com/thebestmensch"
@@ -11,7 +11,7 @@
     {
       "name": "claude-code-multimodel-workflow",
       "source": "./plugin",
-      "description": "Commands, agents, hooks, rules, and tweakcc patches that codify JM's CC workflow discipline."
+      "description": "Commands, agents, hooks, and rules that codify Claude Code workflow discipline patterns."
     }
   ]
 }

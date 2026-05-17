@@ -1,6 +1,6 @@
 #!/bin/bash
 # Stop hook: nudge /compact only when context is high enough to matter.
-# Tiered, not threshold-bark — silent below ~60%, scales tone above.
+# Tiered, not threshold-bark: silent below ~60%, scales tone above.
 
 input=$(cat)
 
@@ -67,7 +67,7 @@ if '[1m]' in model or '1m' in model.lower():
 pct = (total / window) * 100 if window else 0
 tokens_k = total / 1000
 
-# Tiered nudge — silent below 60%.
+# Tiered nudge: silent below 60%.
 if pct < 60:
     sys.exit(0)
 elif pct < 75:
@@ -75,7 +75,7 @@ elif pct < 75:
 elif pct < 85:
     msg = f'Context at {pct:.0f}% ({tokens_k:.0f}k / {window//1000}k). Recommend /compact before starting anything big.'
 elif pct < 95:
-    msg = f'Context at {pct:.0f}% ({tokens_k:.0f}k / {window//1000}k). Strongly recommend /compact now — auto-compact soon.'
+    msg = f'Context at {pct:.0f}% ({tokens_k:.0f}k / {window//1000}k). Strongly recommend /compact now; auto-compact soon.'
 else:
     msg = f'Context at {pct:.0f}% ({tokens_k:.0f}k / {window//1000}k). /compact NOW or risk auto-compact mid-task.'
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Hook 3 — Pre-commit Gate (PreToolUse on Bash)
+# Hook 3: Pre-commit Gate (PreToolUse on Bash)
 # Blocks git commit when UI files were edited without visual QA or code review.
 set -o pipefail
 
 input=$(cat)
 command=$(echo "$input" | jq -r '.tool_input.command // empty')
 
-# Shared matcher — handles env wrappers, abs paths, shell -c, compound
+# Shared matcher: handles env wrappers, abs paths, shell -c, compound
 # segments, alias resolution. Same lib as codex-pre-commit-gate.sh; keeps the
 # two gates in lockstep on what counts as a `git commit` invocation.
 matches=$(/usr/bin/python3 "$(dirname "$0")/lib/match-git-commit.py" "$command" 2>/dev/null)
@@ -27,7 +27,7 @@ bypass_approved="$gate_dir/bypass_approved"
 if [ -f "$bypass_approved" ]; then
   approval=$(cat "$bypass_approved" | tr -d '[:space:]')
   if [ "$approval" = "approved" ]; then
-    # User approved — log and allow
+    # User approved: log and allow
     reason="(user-approved)"
     [ -f "$bypass_request" ] && reason=$(cat "$bypass_request")
     echo "$(date '+%Y-%m-%d %H:%M:%S') | commit-gate | USER APPROVED | $reason" >> "$gate_dir/bypass_log.txt"
@@ -90,9 +90,9 @@ is_stale() {
   return 1
 }
 
-# Check visual QA — only required when UI files were edited.
+# Check visual QA: only required when UI files were edited.
 # Staleness pivot is template_files specifically (backend edits do not invalidate
-# a prior visual QA dispatch — the rendered UI hasn't changed).
+# a prior visual QA dispatch; the rendered UI hasn't changed).
 if [ "$ui_count" -gt 0 ] 2>/dev/null && is_stale "$gate_dir/visual_qa_dispatched" "$template_files"; then
   # pbcopy the skip-request template. User pastes / model re-issues with edited
   # REASON only AFTER posting evidence that /visual-qa is genuinely inapplicable.
@@ -104,14 +104,14 @@ if [ "$ui_count" -gt 0 ] 2>/dev/null && is_stale "$gate_dir/visual_qa_dispatched
   "hookSpecificOutput": {
     "hookEventName": "PreToolUse",
     "permissionDecision": "deny",
-    "permissionDecisionReason": "🚫 Commit blocked: $ui_count UI files edited without visual QA. Dispatch /visual-qa first, then re-run the commit — the gate will clear automatically once the QA marker is fresh.\n\nDO NOT write skip_commit_gate just because the commit was blocked. Only write a skip if /visual-qa is genuinely inapplicable (e.g. CSS for non-capturable UI) AND you've posted evidence for that in chat.\n\nTo request bypass (only if QA truly doesn't apply): echo 'REASON: non-capturable-ui|css-only-no-render-change' > $gate_dir/skip_commit_gate\n(skip-request template is in your clipboard via pbcopy.)\nThen user approves: ! echo approved > $gate_dir/bypass_approved"
+    "permissionDecisionReason": "🚫 Commit blocked: $ui_count UI files edited without visual QA. Dispatch /visual-qa first, then re-run the commit; the gate will clear automatically once the QA marker is fresh.\n\nDO NOT write skip_commit_gate just because the commit was blocked. Only write a skip if /visual-qa is genuinely inapplicable (e.g. CSS for non-capturable UI) AND you've posted evidence for that in chat.\n\nTo request bypass (only if QA truly doesn't apply): echo 'REASON: non-capturable-ui|css-only-no-render-change' > $gate_dir/skip_commit_gate\n(skip-request template is in your clipboard via pbcopy.)\nThen user approves: ! echo approved > $gate_dir/bypass_approved"
   }
 }
 EOF
   exit 0
 fi
 
-# Check code review — required when UI OR backend files were edited
+# Check code review: required when UI OR backend files were edited
 if is_stale "$gate_dir/code_review_dispatched"; then
   scope_desc=""
   if [ "$ui_count" -gt 0 ] 2>/dev/null && [ "$backend_count" -gt 0 ] 2>/dev/null; then
@@ -130,7 +130,7 @@ if is_stale "$gate_dir/code_review_dispatched"; then
   "hookSpecificOutput": {
     "hookEventName": "PreToolUse",
     "permissionDecision": "deny",
-    "permissionDecisionReason": "🚫 Commit blocked: $scope_desc edited without code review. Dispatch /code-review first, then re-run the commit — the gate will clear automatically once the review marker is fresh.\n\nDO NOT write skip_commit_gate just because the commit was blocked. Only write a skip if /code-review is genuinely inapplicable (e.g. pure docs commit) AND you've posted evidence for that in chat.\n\nTo request bypass (only if review truly doesn't apply): echo 'REASON: docs-only|whitespace|trivial-config' > $gate_dir/skip_commit_gate\n(skip-request template is in your clipboard via pbcopy.)\nThen user approves: ! echo approved > $gate_dir/bypass_approved"
+    "permissionDecisionReason": "🚫 Commit blocked: $scope_desc edited without code review. Dispatch /code-review first, then re-run the commit; the gate will clear automatically once the review marker is fresh.\n\nDO NOT write skip_commit_gate just because the commit was blocked. Only write a skip if /code-review is genuinely inapplicable (e.g. pure docs commit) AND you've posted evidence for that in chat.\n\nTo request bypass (only if review truly doesn't apply): echo 'REASON: docs-only|whitespace|trivial-config' > $gate_dir/skip_commit_gate\n(skip-request template is in your clipboard via pbcopy.)\nThen user approves: ! echo approved > $gate_dir/bypass_approved"
   }
 }
 EOF

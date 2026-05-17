@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PreToolUse on Bash — block `git push` when HEAD is more than 1 commit
+# PreToolUse on Bash, block `git push` when HEAD is more than 1 commit
 # ahead of upstream. Forces explicit acknowledgment of bundled prior
 # commits before they reach the remote.
 #
@@ -7,25 +7,25 @@
 # (`68f4bb4` ⌘P PR opener + `ea6ba6d` drift-guard tightening) alongside
 # my soft-card commit, because I didn't audit `git log @{u}..HEAD` first.
 # Memory rule `feedback_check_push_payload.md` (4 days old) already
-# covered this — got skipped under momentum. Hook over rule.
+# covered this, got skipped under momentum. Hook over rule.
 #
 # Behavior:
 # - Triggers only on Bash commands containing `git push`
 # - Reads cwd from `cd <path> && git push` if present, else $PWD
 # - Computes unpushed commit count via `git log @{u}..HEAD --oneline`
-# - 0 commits (or no upstream): pass — push will fail at git's level anyway
-# - 1 commit: pass — single commit ahead is the expected case
+# - 0 commits (or no upstream): pass, push will fail at git's level anyway
+# - 1 commit: pass, single commit ahead is the expected case
 # - 2+ commits: BLOCK with the commit list so the operator can rebase /
 #   reset / acknowledge before pushing
 #
-# Escape hatches (two paths — env doesn't propagate to PreToolUse hooks
+# Escape hatches (two paths, env doesn't propagate to PreToolUse hooks
 # from inline `VAR=1 cmd` invocations, so a touchfile is the only viable
 # bypass for in-CC-session pushes; env var still works when set in the
 # user's shell BEFORE the CC session starts):
 #  1. GIT_PUSH_BUNDLED_OK=1 in the harness's startup env (interactive shell)
 #  2. /tmp/cc-gates/<session_id>/skip_push_bundle_check exists (in-session)
 # Touchfile is per-session and auto-cleared when session-init.sh runs at
-# next session start — bypass doesn't persist across restarts.
+# next session start, bypass doesn't persist across restarts.
 
 set -o pipefail
 
@@ -52,25 +52,25 @@ except Exception:
     pass
 ' 2>/dev/null)
 
-# Touchfile bypass — created by Claude with explicit user authorization
+# Touchfile bypass, created by Claude with explicit user authorization
 # for an intentional bundled push within this session.
 if [ -n "$session_id" ] && [ -f "/tmp/cc-gates/$session_id/skip_push_bundle_check" ]; then
   exit 0
 fi
 
-# Token-level match — `git push` must be the resolved command-words, not a
+# Token-level match, `git push` must be the resolved command-words, not a
 # substring inside a quoted argument to printf/echo/cat/etc. shlex.split
 # respects shell quoting so `printf '... git push ...'` is one token (the
 # quoted string), not three.
 #
 # Handles real-world git invocations:
-#   git push                      — bare
-#   /usr/bin/git push             — absolute path (basename comparison)
-#   command git push / env git push — leading non-git tokens are skipped by
+#   git push                     , bare
+#   /usr/bin/git push            , absolute path (basename comparison)
+#   command git push / env git push, leading non-git tokens are skipped by
 #                                     the outer loop (which only triggers on
 #                                     the git basename), so these match via
 #                                     the inner git push token pair
-#   git -C <repo> push            — pre-subcommand flags (some take args) are
+#   git -C <repo> push           , pre-subcommand flags (some take args) are
 #                                   skipped before checking for `push`
 matches=$(printf '%s' "$command" | /usr/bin/python3 -c '
 import os, shlex, sys
@@ -78,12 +78,12 @@ cmd = sys.stdin.read()
 try:
     tokens = shlex.split(cmd, posix=True, comments=False)
 except ValueError:
-    # Unbalanced quotes — fall back to NO match (avoid false positives on
+    # Unbalanced quotes, fall back to NO match (avoid false positives on
     # malformed commands, which are usually quote-juggling shell tricks).
     sys.exit(0)
 
 # Git options that consume the NEXT token as their argument. Listed from
-# git(1) — anything between `git` and the subcommand we need to skip past.
+# git(1), anything between `git` and the subcommand we need to skip past.
 ARG_OPTS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace",
             "--super-prefix", "--exec-path", "--literal-pathspecs"}
 
@@ -104,7 +104,7 @@ for i, tok in enumerate(tokens):
         if t.startswith("-"):
             j += 1
             continue
-        # Non-flag token reached — this is the subcommand.
+        # Non-flag token reached, this is the subcommand.
         if t == "push":
             print("match")
             sys.exit(0)
@@ -126,7 +126,7 @@ fi
 [ -z "$cwd" ] && cwd="$PWD"
 [ ! -d "$cwd" ] && exit 0
 
-# Get unpushed commits. `@{u}` errors silently if no upstream — exit 0.
+# Get unpushed commits. `@{u}` errors silently if no upstream, exit 0.
 unpushed=$(cd "$cwd" 2>/dev/null && git log '@{u}..HEAD' --oneline 2>/dev/null)
 [ -z "$unpushed" ] && exit 0
 

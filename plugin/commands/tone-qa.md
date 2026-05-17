@@ -3,7 +3,7 @@ description: Run a copy/tone review on a URL or screenshot. Evaluates user-facin
 effort: medium
 ---
 
-Run a copy and tone review on a UI page. Evaluates whether user-facing text matches the project's voice — personality, warmth, clarity, and consistency.
+Run a copy and tone review on a UI page. Evaluates whether user-facing text matches the project's voice, personality, warmth, clarity, and consistency.
 
 ## Inputs
 
@@ -19,8 +19,8 @@ Run a copy and tone review on a UI page. Evaluates whether user-facing text matc
 
    **For URLs (Playwright available):**
    - Navigate to the URL with `browser_navigate`
-   - Take a **full-page screenshot** with `browser_take_screenshot` (`fullPage: true`) — for visual context of where copy appears
-   - Capture a **DOM snapshot** with `browser_snapshot` — for extracting all visible text content
+   - Take a **full-page screenshot** with `browser_take_screenshot` (`fullPage: true`): for visual context of where copy appears
+   - Capture a **DOM snapshot** with `browser_snapshot`: for extracting all visible text content
    - If the page has empty states, error states, or loading states that aren't visible by default, trigger them and screenshot each:
      - Empty state: clear any content filters, navigate to a section with no data
      - Error state: if safely triggerable, capture it
@@ -32,15 +32,15 @@ Run a copy and tone review on a UI page. Evaluates whether user-facing text matc
 
 2. **Load project voice guide:**
    - Look for `.claude/docs/voice-guide.md` in the current project (fall back to `.claude/rules/voice-guide.md` for projects that haven't migrated)
-   - If not found, tell the user and proceed with generic copy evaluation (clarity, consistency, tone — less useful without voice context, but still catches mechanical issues)
-   - Read the voice guide — this is what gets passed to the agent
+   - If not found, tell the user and proceed with generic copy evaluation (clarity, consistency, tone, less useful without voice context, but still catches mechanical issues)
+   - Read the voice guide: this is what gets passed to the agent
 
 3. **Dispatch the Tone QA agent:**
 
    Launch a subagent with `model: sonnet` using the prompt template below.
 
    **The agent receives:**
-   - Full-page screenshot(s) (**use absolute paths** — subagents run from different working directories)
+   - Full-page screenshot(s) (**use absolute paths**: subagents run from different working directories)
    - DOM snapshot (text content and element roles)
    - The project's voice guide
    - The focus area hint if provided
@@ -51,7 +51,7 @@ Run a copy and tone review on a UI page. Evaluates whether user-facing text matc
    - Implementation details about how text is generated or randomized
 
 4. **Interpret findings:**
-   - **Filter false positives:** The agent can't see implementation — it may flag text that's intentionally dynamic (randomized dog messages) or text that comes from external APIs. Verify each finding.
+   - **Filter false positives:** The agent can't see implementation: it may flag text that's intentionally dynamic (randomized dog messages) or text that comes from external APIs. Verify each finding.
    - Map confirmed findings to specific template/code locations
    - Present findings grouped by impact
    - For significant/moderate issues, include the rewritten copy
@@ -63,7 +63,7 @@ Run a copy and tone review on a UI page. Evaluates whether user-facing text matc
 Use this as the subagent prompt. Replace `{VOICE_GUIDE}`, `{FOCUS_AREA}`, and file paths as needed.
 
 ```
-You are a copy and tone reviewer. Your job is to evaluate whether the user-facing text in a web application matches its intended voice and personality. You are not a proofreader — you evaluate whether the copy FEELS right, not just whether it's grammatically correct.
+You are a copy and tone reviewer. Your job is to evaluate whether the user-facing text in a web application matches its intended voice and personality. You are not a proofreader, you evaluate whether the copy FEELS right, not just whether it's grammatically correct.
 
 You have screenshots of the page and its text content. You do NOT have source code or templates. You evaluate the words as a user would encounter them.
 
@@ -82,11 +82,11 @@ You have screenshots of the page and its text content. You do NOT have source co
 
 ## Project Voice Guide
 
-{VOICE_GUIDE — full content of voice-guide.md}
+{VOICE_GUIDE, full content of voice-guide.md}
 
 ## Review Protocol
 
-### Phase 1 — Voice Check
+### Phase 1: Voice Check
 
 Read all visible text on the page as a whole. Does it feel like it was written by the same person/team? Does it match the voice described in the guide?
 
@@ -97,7 +97,7 @@ Read all visible text on the page as a whole. Does it feel like it was written b
 
 Report Phase 1 impressions before moving to Phase 2.
 
-### Phase 2 — Copy Audit
+### Phase 2: Copy Audit
 
 Examine specific categories of text:
 
@@ -143,16 +143,16 @@ Examine specific categories of text:
 
 For each finding:
 - **Category** (Phase 1 or one of the 6 Phase 2 categories)
-- **Location** (describe where on screen — "the empty state message in the main content area")
+- **Location** (describe where on screen: "the empty state message in the main content area")
 - **Current copy** (quote the exact text)
-- **What's off** (specific — "this reads like a system message, not a personal app")
-- **Suggested rewrite** (in the project's voice — demonstrate, don't just describe)
+- **What's off** (specific: "this reads like a system message, not a personal app")
+- **Suggested rewrite** (in the project's voice: demonstrate, don't just describe)
 - **Impact**: significant (undermines the project's identity), moderate (noticeable tone mismatch), minor (could be warmer/clearer but isn't broken)
 
 ## Tone QA Report
 
-### Phase 1 — Voice Impression
-[Overall voice assessment — does this page sound like the project? 2-3 sentences.]
+### Phase 1: Voice Impression
+[Overall voice assessment, does this page sound like the project? 2-3 sentences.]
 
 ### Significant
 [findings that undermine the project's voice identity]
@@ -164,7 +164,7 @@ For each finding:
 [could be better, but not broken]
 
 ### What's Working Well
-[2-3 specific pieces of copy that nail the project's voice — acknowledge what works]
+[2-3 specific pieces of copy that nail the project's voice, acknowledge what works]
 
 ### Summary
 [One paragraph. Is the copy on this page cohesive with the project's voice? What's the single biggest opportunity to make it feel more "on-brand"?]
@@ -189,7 +189,7 @@ Present as:
 [findings + rewritten copy]
 
 ### Minor
-[findings — rewrite if trivial, otherwise just note]
+[findings, rewrite if trivial, otherwise just note]
 
 **Summary:** N findings (S significant, M moderate, L low). Overall voice: [on-brand / mostly on-brand / needs work]
 ```

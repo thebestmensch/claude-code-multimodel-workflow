@@ -7,10 +7,10 @@ Challenge a design or plan by dispatching the devil's advocate agent.
 
 ## Arguments
 
-`$ARGUMENTS` — one of:
+`$ARGUMENTS` is one of:
 - A file path to a design doc or plan (e.g., `docs/superpowers/specs/2026-03-30-foo-design.md`)
 - Pasted text describing an approach to challenge
-- Empty — will review the most recent spec in `docs/superpowers/specs/`
+- Empty (will review the most recent spec in `docs/superpowers/specs/`)
 
 ## Process
 
@@ -36,7 +36,7 @@ Challenge a design or plan by dispatching the devil's advocate agent.
 
 ### Challenges
 
-[Agent's structured findings — claim, evidence, severity, confidence, alternative for each]
+[Agent's structured findings: claim, evidence, severity, confidence, alternative for each]
 
 ### Summary
 

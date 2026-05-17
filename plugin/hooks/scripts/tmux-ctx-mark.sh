@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# UserPromptSubmit hook — writes per-pane sub-chat ctx snapshot for the Visor
+# UserPromptSubmit hook: writes per-pane sub-chat ctx snapshot for the Visor
 # Tmux HUD: project / branch / linear-ticket of the active sub-chat.
 #
 # Why a hook (vs the statusLine exporter): the Claude Agents UI (post-2026-05-11)
@@ -37,7 +37,7 @@ atomic_write() {
 
 # write_empty: invalidation MUST succeed (the file's freshness contract). If
 # atomic_write fails (ENOSPC, sticky-bit cross-owner blockage on the mv, etc.),
-# fall back to plain unlink — same end state for the renderer's parse_ctx
+# fall back to plain unlink; same end state for the renderer's parse_ctx
 # (file absent → ctx_present=0). If unlink also fails, the 300s freshness gate
 # in parse_ctx is the last line of defense against trusting a stale snapshot.
 # Returns 0 on best-effort completion so callers stay simple (Codex r6 finding).
@@ -52,7 +52,7 @@ if [ -z "$cwd" ] || [ ! -d "$cwd" ]; then
     exit 0
 fi
 
-# Walk to the nearest .git ancestor — handles regular repos and worktrees.
+# Walk to the nearest .git ancestor; handles regular repos and worktrees.
 walk="$cwd"
 git_root=""
 while [ -n "$walk" ] && [ "$walk" != "/" ]; do
@@ -64,7 +64,7 @@ while [ -n "$walk" ] && [ "$walk" != "/" ]; do
 done
 
 if [ -z "$git_root" ]; then
-    # Non-repo cwd — empty snapshot, same reasoning as above.
+    # Non-repo cwd: empty snapshot, same reasoning as above.
     write_empty
     exit 0
 fi

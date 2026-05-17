@@ -2,13 +2,13 @@
 # Sweep orphaned stdio MCP server processes at SessionStart.
 #
 # Symptom: stdio MCP servers (registered with `command: ...` in mcpServers
-# config) can survive abnormal CC session exits — their parent CC dies,
+# config) can survive abnormal CC session exits. Their parent CC dies,
 # they're reparented to launchd (ppid=1), and they linger indefinitely.
 # Some (notably @heroku/mcp-server) actively spawn CPU-intensive subprocess
 # trees, compounding into a real battery drain.
 #
 # Strategy: each SessionStart, find known-leaky MCP processes whose parent
-# is launchd — meaning their original session is dead — and kill them with
+# is launchd (meaning their original session is dead) and kill them with
 # their subprocess trees. Active sessions are unaffected because their
 # MCP server's ppid points at a live CC PID, not 1.
 #

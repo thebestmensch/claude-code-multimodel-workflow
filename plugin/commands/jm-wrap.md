@@ -8,7 +8,7 @@ End-of-session cleanup. Run retro (if needed), handle trivial deferreds inline, 
 >
 > No arguments. Runs against the current session's state.
 >
-> Goal: after this command, the user can `/clear` with zero loose ends — no uncommitted work, no stranded worktrees, no forgotten deferreds, no unticketed follow-ups.
+> Goal: after this command, the user can `/clear` with zero loose ends, no uncommitted work, no stranded worktrees, no forgotten deferreds, no unticketed follow-ups.
 
 ## Why this exists
 
@@ -33,11 +33,11 @@ If retro is needed: invoke `/jm-retro` and consume its output. The "What's Next"
 
 If retro already ran: scroll back, re-read the "What's Next" block, use it as input.
 
-If no retro is needed: skip to § 3 with an empty deferred list — the only remaining work is the clean-state check in § 4.
+If no retro is needed: skip to § 3 with an empty deferred list, the only remaining work is the clean-state check in § 4.
 
 ### 2. Memory + config audit (already covered by retro)
 
-If retro ran, it already ran the audit. Don't re-run. If you skipped retro, you also skip this — `/jm-wrap` is not a smaller `/jm-retro`.
+If retro ran, it already ran the audit. Don't re-run. If you skipped retro, you also skip this, `/jm-wrap` is not a smaller `/jm-retro`.
 
 ### 3. Process deferreds and next steps
 
@@ -45,13 +45,13 @@ For every line in retro's "Deferred (optional)" and "Suggested next steps" block
 
 | Bucket | Criteria | Action |
 |---|---|---|
-| **Trivial — execute now** | Safe, reversible, in scope, no user decision needed. Same criteria as retro § 7d "execute, don't list" — but in practice retro already executed those; this catches anything retro chose to surface that could in fact be done inline (often because retro was conservative or new info has surfaced since). | Do the work. Re-run any relevant verification. Commit if it produces a diff. |
-| **Non-trivial — ticket** | Requires more than 5-10 minutes, crosses files, needs review, or warrants async tracking | Create a tracker issue using whichever issue tracker the project uses (Linear via `mcp__linear__create_issue`, GitHub issues via `gh issue create`, etc.). Ask the user once at session start if the tracker isn't obvious. Title format: clear seed, not `TBD:` — this is a real ticket, not a phone stub. Include context: which session, which PR/commit if relevant, why it's deferred. |
+| **Trivial, execute now** | Safe, reversible, in scope, no user decision needed. Same criteria as retro § 7d "execute, don't list", but in practice retro already executed those; this catches anything retro chose to surface that could in fact be done inline (often because retro was conservative or new info has surfaced since). | Do the work. Re-run any relevant verification. Commit if it produces a diff. |
+| **Non-trivial, ticket** | Requires more than 5-10 minutes, crosses files, needs review, or warrants async tracking | Create a tracker issue using whichever issue tracker the project uses (Linear via `mcp__linear__create_issue`, GitHub issues via `gh issue create`, etc.). Ask the user once at session start if the tracker isn't obvious. Title format: clear seed, not `TBD:`: this is a real ticket, not a phone stub. Include context: which session, which PR/commit if relevant, why it's deferred. |
 | **Drop** | Was an idea at the time but isn't worth a ticket. Stale, overtaken by other changes, or YAGNI. | Note in the final report that it was considered and dropped, with a one-line reason. |
 
-**Sanity audit before ticketing.** For each candidate ticket, re-run retro's § 7d audit: safe? reversible? in scope? Already done on disk? Actually declared in a source artifact? Don't create tickets for hallucinated work. A ticket created from a wrong premise is worse than no ticket — it propagates the wrong premise into the next session.
+**Sanity audit before ticketing.** For each candidate ticket, re-run retro's § 7d audit: safe? reversible? in scope? Already done on disk? Actually declared in a source artifact? Don't create tickets for hallucinated work. A ticket created from a wrong premise is worse than no ticket, it propagates the wrong premise into the next session.
 
-**Cap tickets at a reasonable count.** If the deferred list has 10+ candidates, surface that and ask which to ticket vs. drop. Don't dump 12 tickets into the tracker without checking — that's noise, not signal.
+**Cap tickets at a reasonable count.** If the deferred list has 10+ candidates, surface that and ask which to ticket vs. drop. Don't dump 12 tickets into the tracker without checking, that's noise, not signal.
 
 ### 4. Repo clean-state check
 
@@ -78,7 +78,7 @@ git worktree list                     # any active worktrees?
 For each worktree the session created:
 
 - If clean (committed + pushed + PR opened or merged): exit via `ExitWorktree` if it's the current cwd, then `git worktree remove <path>`. If the branch is fully merged into base, delete it.
-- If dirty: surface to the user, don't remove. Worktrees with uncommitted work are unfinished — escalate.
+- If dirty: surface to the user, don't remove. Worktrees with uncommitted work are unfinished, escalate.
 - If pre-existing (not created this session): leave alone.
 
 Then prune:
@@ -110,11 +110,11 @@ Present in chat:
 - ...
 
 **Tickets created:**
-- <ticket-id> <title> — <one-line context>
+- <ticket-id> <title>: <one-line context>
 - ...
 
 **Dropped (with reason):**
-- <idea> — <why>
+- <idea>: <why>
 
 **Repo state:**
 - Branch: <name> @ <SHA>
@@ -136,15 +136,15 @@ If anything blocks a clean wrap, lead with that instead of the "Ready to" line, 
 - **Never auto-merge a PR** or push to main. Those are user actions.
 - **Never drop a stash** or discard uncommitted work without explicit user confirmation.
 - **Never delete a worktree** that has uncommitted changes.
-- **Never close tracker tickets** as part of wrap — only create new ones for deferreds.
+- **Never close tracker tickets** as part of wrap: only create new ones for deferreds.
 - **Don't re-run `/jm-retro`** if it already ran this session. Retro is once-per-session by design.
 - **Don't create vanity tickets.** A ticket needs a clear acceptance bar, not just "look into this someday." If the deferred is too vague to write 2-3 acceptance criteria for, drop it or surface to the user for refinement instead.
 - **Don't substitute wrap for retro.** If retro is needed (per § 1), run retro. Wrap without retro on a substantive session loses the lessons.
 
 ## Boundary
 
-`/jm-wrap` runs **after the work is done** — including any PR ping-pong via `/jm-pr`. It is the final step before `/clear` or `/exit`. It does NOT cover:
+`/jm-wrap` runs **after the work is done**: including any PR ping-pong via `/jm-pr`. It is the final step before `/clear` or `/exit`. It does NOT cover:
 
-- Driving open PRs to green — use `/jm-pr` first
-- Distilling session lessons — that's `/jm-retro` (which wrap chains into when needed)
-- Deploying or promoting code — those are user-triggered (`/deploy` or manual)
+- Driving open PRs to green: use `/jm-pr` first
+- Distilling session lessons: that's `/jm-retro` (which wrap chains into when needed)
+- Deploying or promoting code: those are user-triggered (`/deploy` or manual)

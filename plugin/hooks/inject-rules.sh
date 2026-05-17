@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# claude-code-multimodel-workflow — SessionStart hook: inject dispatch rules as additional context.
+# claude-code-multimodel-workflow SessionStart hook: inject dispatch rules as additional context.
 #
 # Claude Code's plugin loader does not auto-inject markdown from a `rules/`
 # directory the way it does for `skills/` or `agents/`. To make these rules
@@ -15,7 +15,7 @@ set -o errexit -o pipefail -o nounset
 rules_dir="${CLAUDE_PLUGIN_ROOT:-}/rules"
 
 if [[ -z "${CLAUDE_PLUGIN_ROOT:-}" ]] || [[ ! -d "$rules_dir" ]]; then
-  # Standalone install or no rules shipped — nothing to inject.
+  # Standalone install or no rules shipped: nothing to inject.
   exit 0
 fi
 

@@ -12,15 +12,15 @@ Pre-compaction retro. Distill lessons and commit memory **before** running `/com
 
 ## Why this exists
 
-`/compact` replaces the raw conversation history with a model-written summary. Lessons that haven't been routed to standing instructions or committed to a memory repo at compaction time are lost — the summarizer paraphrases them at best, drops them at worst. `/jm-retro` is the right body of work, but its § 7 "What's Next" block assumes the session is ending — mid-session it manufactures hallucinated "Unfinished / Deferred" items that survive compaction as authoritative state. This command runs the retro body without the end-of-session framing.
+`/compact` replaces the raw conversation history with a model-written summary. Lessons that haven't been routed to standing instructions or committed to a memory repo at compaction time are lost. The summarizer paraphrases them at best, drops them at worst. `/jm-retro` is the right body of work, but its § 7 "What's Next" block assumes the session is ending; mid-session it manufactures hallucinated "Unfinished / Deferred" items that survive compaction as authoritative state. This command runs the retro body without the end-of-session framing.
 
-Not the same as `/jm-wrap` — wrap handles worktrees, background processes, ticketing deferreds. None of that applies mid-session.
+Not the same as `/jm-wrap`. Wrap handles worktrees, background processes, ticketing deferreds. None of that applies mid-session.
 
 ## Process
 
 Run the same self-reflection + routing + rule-update + memory audit + commit flow as `/jm-retro`, **stopping at § 6 (Report)**. Skip § 7 entirely.
 
-### 1. Self-Reflection *(chat only — do not persist)*
+### 1. Self-Reflection *(chat only, do not persist)*
 
 Follow `/jm-retro` § 1.
 
@@ -38,7 +38,7 @@ Follow `/jm-retro` § 4.
 
 ### 5. Memory & Config Audit
 
-Follow `/jm-retro` § 5 — including the memory backup commit. **This is the load-bearing step for pre-compact.** Lessons routed to memory files but not yet pushed are still in the working tree of a memory dir; they survive compaction. Lessons that exist only in the conversation transcript do not.
+Follow `/jm-retro` § 5, including the memory backup commit. **This is the load-bearing step for pre-compact.** Lessons routed to memory files but not yet pushed are still in the working tree of a memory dir; they survive compaction. Lessons that exist only in the conversation transcript do not.
 
 If a memory dir has uncommitted writes from this session, commit + push them before reporting. Skipping the commit here defeats the purpose of running this command.
 
@@ -60,18 +60,18 @@ Ready to compact. Run `/compact` when you want to continue with a fresh window.
 
 ### 7. Do NOT run "What's Next"
 
-Explicitly skipped. The session is not ending. Unfinished work is still live in the upcoming post-compact context — listing it here as "Deferred" risks the summarizer treating those bullets as authoritative future-session inputs.
+Explicitly skipped. The session is not ending. Unfinished work is still live in the upcoming post-compact context; listing it here as "Deferred" risks the summarizer treating those bullets as authoritative future-session inputs.
 
 If you find yourself drafting an "Unfinished" or "Deferred" block, stop. That's `/jm-retro` / `/jm-wrap` territory, not this command.
 
 ## Guardrails
 
-- Do **not** invoke `/compact` yourself — `/compact` is a built-in CC command and is not model-invocable. The user runs it after this command finishes.
+- Do **not** invoke `/compact` yourself; `/compact` is a built-in CC command and is not model-invocable. The user runs it after this command finishes.
 - Do **not** create new documentation files unless explicitly asked.
 - Do **not** persist session logs, task details, or project-specific trivia.
-- If a change is safe, reversible, and within scope — execute it. Do not ask permission.
+- If a change is safe, reversible, and within scope, execute it. Do not ask permission.
 - Memory commit is mandatory if any memory file was touched this session. Don't report "ready to compact" with uncommitted memory entries.
-- **Verify before memorializing.** Same rule as `/jm-retro` — unverified factual claims about system behavior must not be committed as durable rules. The retro is the most dangerous place for unverified claims; pre-compact is the same hazard plus a hard deadline.
+- **Verify before memorializing.** Same rule as `/jm-retro`: unverified factual claims about system behavior must not be committed as durable rules. The retro is the most dangerous place for unverified claims; pre-compact is the same hazard plus a hard deadline.
 
 ## Boundary
 

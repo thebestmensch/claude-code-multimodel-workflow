@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stop hook — suggests code simplification if files were edited this session.
+# Stop hook: suggests code simplification if files were edited this session.
 # Opt-in: only fires if ~/.claude/.auto-simplify exists.
 # Dedup: skips if already simplified this session.
 set -o pipefail
@@ -15,7 +15,7 @@ gate_dir="/tmp/cc-gates/$session_id"
 edited_file="$gate_dir/edited_files"
 simplify_marker="$gate_dir/simplified"
 
-# No files edited, or already simplified — skip
+# No files edited, or already simplified: skip
 [ -f "$edited_file" ] || exit 0
 [ -f "$simplify_marker" ] && exit 0
 

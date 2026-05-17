@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hook 2 — Template Edit Counter (PostToolUse on Edit|Write)
+# Hook 2: Template Edit Counter (PostToolUse on Edit|Write)
 # Counts UI file edits and reminds about visual QA every 5th edit.
 set -o pipefail
 
@@ -15,7 +15,7 @@ case "$file_path" in
   *) exit 0 ;;
 esac
 
-# Exclude throwaway brainstorm visual-companion screens — they are gitignored
+# Exclude throwaway brainstorm visual-companion screens. They are gitignored
 # design aids, not shipping UI. The user reviews them live in the browser as
 # the QA mechanism itself.
 case "$file_path" in
@@ -36,7 +36,7 @@ else
 fi
 echo "$count" > "$count_file"
 
-# Append to file list (deduped on read, not write — simpler)
+# Append to file list (deduped on read, not write; simpler)
 echo "$file_path" >> "$gate_dir/template_files"
 
 # Reminder every 5th edit (only if no visual QA dispatched)

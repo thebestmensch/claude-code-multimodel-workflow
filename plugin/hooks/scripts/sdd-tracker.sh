@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hook — SDD Review Tracker (PostToolUse on Agent)
+# Hook: SDD Review Tracker (PostToolUse on Agent)
 # Tracks implementer vs reviewer dispatches for the two-phase SDD review gate.
 # Implementer dispatches set TWO flags (spec + code); each reviewer type clears its own.
 set -o pipefail
@@ -17,7 +17,7 @@ desc=$(echo "$input" | jq -r '.tool_input.description // empty' | tr '[:upper:]'
 
 # Implementer: description matches "task" + a number (Task 1, Tasks 3+4, etc.)
 # but NOT if it also contains "review"/"spec"/"quality" (those are reviewers).
-# Sets both review flags — both must clear before task completion.
+# Sets both review flags; both must clear before task completion.
 case "$desc" in
   *review*|*spec*|*quality*) ;;
   *task*[0-9]*)
@@ -38,7 +38,7 @@ esac
 
 # Code reviewer: description contains "code review" or "quality review"
 # Also cleared by /code-review skill dispatch (handled by dispatch-tracker.sh
-# which touches code_review_dispatched — but this flag is separate).
+# which touches code_review_dispatched, but this flag is separate).
 case "$desc" in
   *visual*|*qa*|*polish*|*tone*|*bug*|*spec*) ;;
   *code*review*|*quality*review*|*code*quality*|*lensed*review*)

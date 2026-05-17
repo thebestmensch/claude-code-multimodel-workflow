@@ -59,7 +59,7 @@ fi
 # If python exited non-zero, $err contains the parse error.
 if [ -n "$err" ]; then
   cat <<EOF >&2
-🚫 BLOCKED — invalid YAML in GitHub Actions workflow:
+🚫 BLOCKED: invalid YAML in GitHub Actions workflow:
 
   $file_path
 
@@ -67,11 +67,11 @@ PyYAML parse error:
 $err
 
 Common cause: multi-line bash string inside \`run: |\` block where the
-continuation line starts at column 1 — this terminates the YAML block
+continuation line starts at column 1. This terminates the YAML block
 scalar early. Use printf with \\n instead, or indent the continuation
 to match the block.
 
-Fix the YAML before committing — pushing a broken workflow results in
+Fix the YAML before committing. Pushing a broken workflow results in
 a 0-second / no-jobs / "workflow file issue" run on GitHub that's
 opaque to debug remotely.
 EOF

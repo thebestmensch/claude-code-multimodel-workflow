@@ -2,19 +2,19 @@
 
 When running brainstorming or writing-plans workflows, auto-dispatch advisory agents at the points below.
 
-**Always announce.** One line: "Dispatching the research agent to investigate X" or "Dispatching the devil's advocate to challenge this design — it crosses multiple components."
+**Always announce.** One line: "Dispatching the research agent to investigate X" or "Dispatching the devil's advocate to challenge this design; it crosses multiple components."
 
 ## Research Agent (during brainstorming)
 
-When a clarifying question reveals a topic needing deep investigation — existing tools, library comparisons, infrastructure fit — dispatch in background:
+When a clarifying question reveals a topic needing deep investigation (existing tools, library comparisons, infrastructure fit), dispatch in background:
 
-```
+```text
 Agent(subagent_type="research-agent", run_in_background=true)
 ```
 
 Continue brainstorming while it runs. Incorporate the returned 2-3 options + tradeoffs into approach proposals.
 
-**Preflight before tool/vendor/library evaluations.** Elicit constraints that shape the search space *first* (billing model, integration shape, diversity vs. existing tools, self-host preference, scale) — the research-agent skill owns the full prompt list. Constraints surfaced after a research pass invalidate it.
+**Preflight before tool/vendor/library evaluations.** Elicit constraints that shape the search space *first* (billing model, integration shape, diversity vs. existing tools, self-host preference, scale). The research-agent skill owns the full prompt list. Constraints surfaced after a research pass invalidate it.
 
 **Don't dispatch for:** user-preference questions (ask them), topics answerable from codebase exploration, simple factual lookups.
 
@@ -40,11 +40,11 @@ Pass: the full design/plan text + relevant codebase context.
 
 ## Lateral Debate (when one voice isn't enough)
 
-Devil's advocate is one perspective. `/lateral` fans out **five** lateral-thinking personas — hacker, researcher, simplifier, architect, contrarian — in parallel, each returns a single reframe, the user picks. Pattern borrowed from ouroboros's `ooo unstuck`.
+Devil's advocate is one perspective. `/lateral` fans out **five** lateral-thinking personas (hacker, researcher, simplifier, architect, contrarian) in parallel, each returns a single reframe, the user picks. Pattern borrowed from ouroboros's `ooo unstuck`.
 
 **Auto-trigger surfaces (hook-driven, no manual invocation needed):**
 - `lateral-stuck-detector.sh` fires on `UserPromptSubmit` when the prompt contains frustration / stuck signals ("still failing", "tried 3 times", "i'm stuck", "keeps failing", "this isn't working", "i give up", "nothing works"). Injects a context note nudging `/lateral`.
-- Same hook fires on `PostToolUse(Edit|Write|NotebookEdit)` at the 4th edit to the same file in a session — signal that you're cycling on the same fix shape and a reframe may unstick faster than another retry.
+- Same hook fires on `PostToolUse(Edit|Write|NotebookEdit)` at the 4th edit to the same file in a session: signal that you're cycling on the same fix shape and a reframe may unstick faster than another retry.
 
 **Cap:** one nudge per session (UserPromptSubmit path) + one nudge at 4th same-file edit. Once `/lateral` runs, the dispatch marker (`lateral_dispatched`) silences both surfaces for the rest of the session.
 
@@ -52,13 +52,13 @@ Devil's advocate is one perspective. `/lateral` fans out **five** lateral-thinki
 
 ## Ambiguity Gate (before exiting plan mode)
 
-`ambiguity-gate.sh` fires on `PreToolUse(ExitPlanMode)` and **denies** exit when the plan text contains too many ambiguity markers — TBD, TODO, "decide later", "maybe", "probably", "not sure", "unclear", "depends on", `???`. Pattern borrowed from ouroboros's Seed-readiness check: refuse to leave plan mode while unresolved decisions remain.
+`ambiguity-gate.sh` fires on `PreToolUse(ExitPlanMode)` and **denies** exit when the plan text contains too many ambiguity markers: TBD, TODO, "decide later", "maybe", "probably", "not sure", "unclear", "depends on", `???`. Pattern borrowed from ouroboros's Seed-readiness check: refuse to leave plan mode while unresolved decisions remain.
 
 **Behavior:** trivial plans (< 3 numbered tasks AND < 600 chars) pass silently. Above that, threshold is `5 + (plan_len - 600) / 500` markers. Above threshold → deny with a breakdown of which marker classes hit.
 
 **How to clear:** resolve hedging by asking the user, dispatch `/lateral` if the choice itself is the blocker, or bypass with `touch /tmp/cc-gates/$SESSION_ID/skip_ambiguity_gate` (only when the markers are intentional, e.g. the plan documents known open questions that don't block first steps).
 
-Runs alongside `devils-advocate-plan-gate.sh` — both fire on `ExitPlanMode`; the ambiguity gate is mechanical / cheap, devil's advocate is LLM / thorough.
+Runs alongside `devils-advocate-plan-gate.sh`: both fire on `ExitPlanMode`; the ambiguity gate is mechanical / cheap, devil's advocate is LLM / thorough.
 
 ## Restate-Goal Gate (before destructive actions)
 

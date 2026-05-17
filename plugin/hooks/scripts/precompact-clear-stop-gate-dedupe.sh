@@ -8,7 +8,7 @@
 #
 # `emit_stop_block_dedupe` deduplicates repeat blocks within a session. On
 # first emit per (hook,state) it writes the full payload; on subsequent
-# emits it sends a SHORT reference like "[Stop-gate still blocked — see
+# emits it sends a SHORT reference like "[Stop-gate still blocked, see
 # prior message for details]" carrying decision:"block" (so the gate stays
 # effective; never silent). Two pressures reconciled:
 #   - bypass prevention: gate always emits block (closes Codex slice-4 H1)
@@ -16,7 +16,7 @@
 #
 # Compaction breaks the second pressure: when CC summarizes earlier turns,
 # the full block payload is evicted from context. The short reference then
-# points at a "prior message" that the model can no longer see — useless.
+# points at a "prior message" that the model can no longer see. Useless.
 #
 # Fix: on PreCompact, wipe ${hook_name}_last_emit markers. The next Stop
 # treats the state as first-seen and emits the FULL payload again. Dedupe
@@ -39,7 +39,7 @@ gate_dir="${CC_GATE_DIR_BASE:-/tmp/cc-gates}/$session_id"
 # emit_stop_block_dedupe (codex-stop-gate, visual-qa-stop-gate,
 # interaction-qa-stop-gate, mobile-pattern-stop-gate) write *_last_emit
 # files. Other gate state (skip-* touchfiles, edited_files, dispatch markers,
-# session-start timestamp) is preserved — those are deliberately durable
+# session-start timestamp) is preserved; those are deliberately durable
 # across compaction.
 find "$gate_dir" -maxdepth 1 -type f -name '*_last_emit' -delete 2>/dev/null || true
 

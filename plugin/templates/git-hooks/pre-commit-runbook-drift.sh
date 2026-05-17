@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# pre-commit-runbook-drift.sh — adopter snippet
+# pre-commit-runbook-drift.sh: adopter snippet
 #
 # Append to .git/hooks/pre-commit (or use as the whole file) to run
 # check-runbook-drift on the two near-mirror runbooks when either is
@@ -31,7 +31,7 @@ export RUNBOOK_TICKET_PREFIXES="${RUNBOOK_TICKET_PREFIXES:-ABC,XYZ}"
 # below are the work-ticket pair; if you also mirror `*-linear-new-ticket.md`
 # or `*-linear-status-ticket.md`, duplicate this block (or add a second
 # hook file) with that class's regex + matching paths. Don't broaden the
-# regex without broadening the args — staged new/status files would run
+# regex without broadening the args; staged new/status files would run
 # against the work-ticket pair and silently pass.
 STAGED="$(git diff --cached --name-only --diff-filter=ACM)"
 # Pattern allows hyphenated project slugs (e.g. `beta-svc-linear-work-ticket.md`).

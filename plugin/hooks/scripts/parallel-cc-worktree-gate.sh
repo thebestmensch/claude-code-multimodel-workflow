@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hook — parallel CC worktree gate (PreToolUse on Edit|Write)
+# Hook: parallel CC worktree gate (PreToolUse on Edit|Write)
 #
 # Enforces the worktree-first rule (memory: feedback_parallel_cc_cwd_warn.md).
 # When a sibling Claude Code session shares this git toplevel AND the current
@@ -27,7 +27,7 @@ file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
 session_dir="$GATE_DIR_BASE/$session_id"
 mkdir -p "$session_dir" 2>/dev/null || true
 
-# Bypass — user wrote a reason to skip the gate this session.
+# Bypass: user wrote a reason to skip the gate this session.
 [ -f "$session_dir/skip_worktree_gate" ] && exit 0
 
 # Once-per-session: don't re-prompt on every edit. After the first ask the
@@ -49,7 +49,7 @@ case "$toplevel" in
 esac
 
 # Walk every running Claude Code process. The CC binary's process name is
-# `2.1.111` (versioned binary), not `claude` — `pgrep -x claude` returns
+# `2.1.111` (versioned binary), not `claude`; `pgrep -x claude` returns
 # nothing. Match the install-path substring instead.
 # Self counts as 1; > 1 means a collision.
 sibling_count=0
@@ -66,13 +66,13 @@ done
 others=$((sibling_count - 1))
 touch "$session_dir/worktree_gate_fired"
 
-# Headless-aware payload — sdk-cli has no UI to confirm against, so emit
+# Headless-aware payload: sdk-cli has no UI to confirm against, so emit
 # additionalContext + allow rather than stalling on "ask".
 is_headless=0
 [ "${CLAUDE_CODE_ENTRYPOINT:-}" = "sdk-cli" ] && is_headless=1
 
 reason=$(cat <<EOF
-PARALLEL CC SESSION DETECTED — worktree-first rule violation risk
+PARALLEL CC SESSION DETECTED: worktree-first rule violation risk
 
   Tree:                 $toplevel
   Other CC sessions:    $others

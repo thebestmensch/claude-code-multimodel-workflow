@@ -11,7 +11,7 @@
 #
 # Bypass: Claude writes to /tmp/cc-gates/<session>/agent-eligible-
 # verified-<ticket-id> after verifying scope. File is consumed on use
-# (one-shot) — re-affirm for each ticket.
+# (one-shot); re-affirm for each ticket.
 set -o pipefail
 
 input=$(cat)
@@ -43,13 +43,13 @@ if [ -f "$bypass_file" ]; then
   exit 0
 fi
 
-# Block — message instructs assistant to verify + write bypass file
+# Block: message instructs assistant to verify + write bypass file
 cat <<EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "PreToolUse",
     "permissionDecision": "deny",
-    "permissionDecisionReason": "BLOCKED: 'agent-eligible' label requires scope verification (CLAUDE.md line 40 + memory feedback_agent_eligible_self_mod_filing_check.md). Never apply this label to tickets that modify services/tickets/, .claude/commands/work-ticket.md, or the agent profile system — agent will bounce on self-mod and burn 1 of 2 bounce slots. To proceed: (1) read the ticket's ## Scope section; (2) confirm none of those paths are in scope; (3) run: mkdir -p $gate_dir && echo 'scope verified clear of services/tickets and work-ticket.md' > $bypass_file ; (4) retry the save_issue call. The bypass file is single-use per ticket."
+    "permissionDecisionReason": "BLOCKED: 'agent-eligible' label requires scope verification (CLAUDE.md line 40 + memory feedback_agent_eligible_self_mod_filing_check.md). Never apply this label to tickets that modify services/tickets/, .claude/commands/work-ticket.md, or the agent profile system; agent will bounce on self-mod and burn 1 of 2 bounce slots. To proceed: (1) read the ticket's ## Scope section; (2) confirm none of those paths are in scope; (3) run: mkdir -p $gate_dir && echo 'scope verified clear of services/tickets and work-ticket.md' > $bypass_file ; (4) retry the save_issue call. The bypass file is single-use per ticket."
   }
 }
 EOF

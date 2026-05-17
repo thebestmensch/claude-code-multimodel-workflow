@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PostToolUse/Bash hook — stamps last_verify when a runtime-verifying command runs.
+# PostToolUse/Bash hook: stamps last_verify when a runtime-verifying command runs.
 # Feeds the Stop-event backend-verification-gate: evidence, not ritual.
 set -o pipefail
 
@@ -13,7 +13,7 @@ command=$(echo "$input" | jq -r '.tool_input.command // empty')
 gate_dir="/tmp/cc-gates/$session_id"
 [ -d "$gate_dir" ] || mkdir -p "$gate_dir"
 
-# Verifying command patterns — things that exercise code at runtime.
+# Verifying command patterns: things that exercise code at runtime.
 # Broad on purpose: over-capture is fine (false positive = gate releases early),
 # under-capture is worse (blocks legitimate work). Only cares that SOMETHING ran.
 case "$command" in

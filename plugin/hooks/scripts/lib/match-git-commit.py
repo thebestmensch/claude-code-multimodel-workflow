@@ -75,7 +75,7 @@ def _alias_resolves_to_commit(name: str) -> bool:
         return False
     for line in result.stdout.splitlines():
         line = line.strip()
-        # Shell aliases (`!sh -c "..."`) — treat as commit conservatively
+        # Shell aliases (`!sh -c "..."`), treat as commit conservatively
         # only if the shell payload mentions `git commit`. Otherwise skip.
         if line.startswith("!"):
             if "git commit" in line:
@@ -97,7 +97,7 @@ def matches_git_commit(tokens: list[str]) -> bool:
         # Shell wrapper invoking a payload via -c: bash/sh/zsh/fish/dash/ksh.
         # Match on basename so `/bin/bash -c "git commit"` is caught. Also
         # recognize short-flag clusters ending in `c` (e.g. `bash -lc CMD`,
-        # `bash -lic CMD`) — `-c` must be last in the cluster because it
+        # `bash -lic CMD`), `-c` must be last in the cluster because it
         # consumes the next argv.
         if os.path.basename(tok) in SHELL_WRAPPERS:
             j = i + 1

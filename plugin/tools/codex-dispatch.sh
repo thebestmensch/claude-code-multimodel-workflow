@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Codex dispatch wrapper — pre-flight git hygiene + hang-bail polling.
+# Codex dispatch wrapper: pre-flight git hygiene + hang-bail polling.
 #
 # Closes the manual-discipline gaps documented in ~/.claude/rules/codex-dispatch.md:
 #   - gap #5: staged-but-not-committed diff invisible to Codex     (auto-unstaged)
@@ -19,9 +19,9 @@
 #   codex-dispatch.sh cancel <job-id>
 #
 # Exit codes:
-#   0 — review completed; result printed to stdout
-#   2 — pre-flight failure (no diff, missing companion, etc.)
-#   3 — hang-bail fired (job cancelled; bypass required)
+#   0: review completed; result printed to stdout
+#   2: pre-flight failure (no diff, missing companion, etc.)
+#   3: hang-bail fired (job cancelled; bypass required)
 
 set -o errexit -o pipefail -o nounset
 
@@ -51,7 +51,7 @@ case "${MODE}" in
 esac
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 \
-  || { echo "ERROR: cwd is not inside a git work tree (gap #3 — cd into the repo whose diff you want reviewed)" >&2; exit 2; }
+  || { echo "ERROR: cwd is not inside a git work tree (gap #3: cd into the repo whose diff you want reviewed)" >&2; exit 2; }
 
 # ---- pre-flight: gap #5 (staged) --------------------------------------------
 if ! git diff --cached --quiet; then
@@ -176,7 +176,7 @@ while :; do
     echo "[poll] phase=verifying, log stable (${stable}/${MAX_STABLE_POLLS}) at ${cur_size}B (elapsed: ${elapsed}s)"
     if [ "${stable}" -ge "${MAX_STABLE_POLLS}" ]; then
       echo "" >&2
-      echo "[hang-bail] Job hung — ${MAX_STABLE_POLLS}×${POLL_INTERVAL}s in verifying with no log growth. Cancelling." >&2
+      echo "[hang-bail] Job hung after ${MAX_STABLE_POLLS}×${POLL_INTERVAL}s in verifying with no log growth. Cancelling." >&2
       if [ -n "${JOB_ID}" ]; then
         node "${COMPANION}" cancel "${JOB_ID}" >&2 || true
       fi

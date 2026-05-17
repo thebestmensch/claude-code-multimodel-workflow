@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# UserPromptSubmit hook — detects magic keywords and injects skill routing hints.
+# UserPromptSubmit hook: detects magic keywords and injects skill routing hints.
 # Runs BEFORE Claude processes the message, so the hint appears in context.
 # Only matches keywords at word boundaries, not inside other words.
 # Skips informational intent ("what is ralph", "how does teams work").
@@ -13,7 +13,7 @@ prompt=$(echo "$input" | jq -r '.prompt // empty')
 # Lowercase for matching
 lower=$(echo "$prompt" | tr '[:upper:]' '[:lower:]')
 
-# Skip informational intent — don't trigger skills for questions ABOUT the keyword
+# Skip informational intent: don't trigger skills for questions ABOUT the keyword
 if echo "$lower" | grep -qE '(what is|what are|how does|how do|explain|tell me about|describe) .*(ralph|teams|debug|trace|simplif)'; then
   exit 0
 fi
@@ -30,7 +30,7 @@ if echo "$lower" | grep -qwE '(team up|use teams|agent teams)'; then
   hints="${hints}Use /teams to orchestrate coordinated agents.\n"
 fi
 
-# Debugging — only suggest superpowers:systematic-debugging if that plugin is installed.
+# Debugging: only suggest superpowers:systematic-debugging if that plugin is installed.
 # Detection tolerates both the bare cache dir (older layout) and the
 # marketplace-nested layout (cache/<marketplace>/superpowers/...) plus the
 # `claude plugin list` output which prints `❯ superpowers@<marketplace>` with

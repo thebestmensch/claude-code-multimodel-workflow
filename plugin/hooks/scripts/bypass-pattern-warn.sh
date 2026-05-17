@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# PreToolUse on Bash — block commands that bypass safety gates.
+# PreToolUse on Bash, block commands that bypass safety gates.
 #
 # Origin: 2026-05-03 retro. After a pre-push hook fired (480 tests, real
-# infra problem — missing `collectstatic` in worktree), I suggested
+# infra problem, missing `collectstatic` in worktree), I suggested
 # `SKIP_PRE_PUSH_TESTS=1` as the next step. User pushed back: "why
-# should we bypass?" — the gate was correct, the env was broken.
+# should we bypass?", the gate was correct, the env was broken.
 # Memory rule `feedback_never_default_bypass.md` already covered this
-# (multiple prior corrections noted) — got skipped under momentum.
+# (multiple prior corrections noted), got skipped under momentum.
 # Hook over rule.
 #
-# Patterns blocked (token-level match — must be actual argv tokens, not
+# Patterns blocked (token-level match, must be actual argv tokens, not
 # substrings inside quoted strings):
 #  - SKIP_*=1 env-var prefix to a command (SKIP_PRE_PUSH_TESTS, etc.)
 #  - --no-verify (git commit/push)
@@ -28,7 +28,7 @@
 #  2. /tmp/cc-gates/<session_id>/skip_bypass_pattern_warn exists
 #     (in-session, after explicit user authorization)
 # Inline `VAR=1 cmd` does NOT propagate to PreToolUse hook child
-# processes — env var only works when set in the parent shell.
+# processes, env var only works when set in the parent shell.
 
 set -o pipefail
 
@@ -76,7 +76,7 @@ for t in tokens:
     if re.match(r"^SKIP_[A-Z_]+=1$", t):
         print(f"skip_env:{t}")
         sys.exit(0)
-    # First non-VAR=value token marks end of env prefix region — stop scanning
+    # First non-VAR=value token marks end of env prefix region, stop scanning
     if "=" not in t.split("/")[-1]:
         break
 

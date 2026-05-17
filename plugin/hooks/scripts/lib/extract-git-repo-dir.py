@@ -40,7 +40,7 @@ def extract(cmd: str) -> str | None:
     i = 0
     while i < len(tokens):
         tok = tokens[i]
-        # `cd <path>` — only treat as cwd-change when path isn't a flag.
+        # `cd <path>`, only treat as cwd-change when path isn't a flag.
         # `cd -` (jump to previous dir) is not supportable here.
         if tok == "cd" and i + 1 < len(tokens):
             nxt = tokens[i + 1]
@@ -48,7 +48,7 @@ def extract(cmd: str) -> str | None:
                 last_cd = os.path.expanduser(nxt)
             i += 2
             continue
-        # `git ... -C <path> ... <subcmd>` — walk options looking for -C.
+        # `git ... -C <path> ... <subcmd>`, walk options looking for -C.
         # Basename comparison so /usr/bin/git is matched too.
         if os.path.basename(tok) == "git":
             j = i + 1

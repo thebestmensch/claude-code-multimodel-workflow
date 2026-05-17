@@ -19,7 +19,7 @@ After opening a PR, the loop is: wait for CodeRabbit → triage comments → fix
 
 - **In scope:** CodeRabbit comments, GitHub Actions check failures, merge conflicts with base (resolve when strategy is unambiguous), merging the PR once green.
 - **Out of scope:** Force-pushing to a shared branch, force-pushing to main, approving your own PR via `gh pr review --approve`, deleting the base branch, re-requesting human review.
-- **Human review comments** — if a human reviewer left blocking comments, treat them as escalation (see § 8). Don't act on human comments autonomously; only CR is in the autonomous loop.
+- **Human review comments**: if a human reviewer left blocking comments, treat them as escalation (see § 8). Don't act on human comments autonomously; only CR is in the autonomous loop.
 
 ## Process
 
@@ -34,22 +34,22 @@ Capture and announce: PR number, branch, base, current state, mergeable status, 
 
 Before any fixes, enumerate everything blocking merge:
 
-- **CodeRabbit comments:** `gh api repos/{owner}/{repo}/pulls/{N}/comments` — filter for `user.login == "coderabbitai[bot]"` (or `coderabbitai`). Bucket by file + line.
+- **CodeRabbit comments:** `gh api repos/{owner}/{repo}/pulls/{N}/comments`: filter for `user.login == "coderabbitai[bot]"` (or `coderabbitai`). Bucket by file + line.
 - **Other inline comments:** same endpoint, group by author.
 - **Issue-level review comments:** `gh api repos/{owner}/{repo}/issues/{N}/comments` for `user.login == "coderabbitai[bot]"` summary posts (the long "Walkthrough" + "Actionable comments" body).
-- **Failing checks:** `gh pr checks <N>` — capture failing runs and follow their logs.
+- **Failing checks:** `gh pr checks <N>`: capture failing runs and follow their logs.
 - **Merge state:** if `mergeable == "CONFLICTING"`, attempt resolution autonomously when the strategy is obvious (lockfile regen, generated-file rebase, trivial textual conflicts where one side is clearly stale). Escalate (§ 8) when the conflict touches business logic, schema, or any file where both sides made independent semantic changes.
 
-Filter against the latest push SHA — anything CR posted before the current HEAD that's already addressed by a later commit can be skipped. CR's `resolved` flag on conversations is the authoritative "this is done" marker; respect it.
+Filter against the latest push SHA, anything CR posted before the current HEAD that's already addressed by a later commit can be skipped. Thread resolution state lives on GraphQL `PullRequestReviewThread.isResolved`, not the REST `/pulls/{N}/comments` payload; fetch it via `gh api graphql -f query='{ repository(...) { pullRequest(number: N) { reviewThreads(first: 100) { nodes { isResolved comments(first: 1) { nodes { path line } } } } } } }'` and skip threads where `isResolved == true`.
 
 ### 3. Triage each comment
 
-For every unresolved CR (or human) comment, decide one of three dispositions. Write the disposition inline before acting on it — don't silently fix everything.
+For every unresolved CR comment, decide one of three dispositions. Write the disposition inline before acting on it, don't silently fix everything. (Human comments escalate per § 8; don't triage them autonomously.)
 
 | Disposition | When | What to do |
 |---|---|---|
 | **Fix** | Concrete bug, security issue, real correctness problem, or a clear style/lint violation that matches house conventions | Apply the change. Group fixes by file when possible. |
-| **Push back** | CR's claim is wrong (false positive on dynamic typing, stylistic preference that contradicts house style, misread of the code), or the suggestion would make the code worse | Reply on the thread with a one-paragraph technical rebuttal — cite the relevant convention, file, or line that supports your reasoning. `gh api -X POST repos/{owner}/{repo}/pulls/{N}/comments/{cid}/replies -f body=...`. Then mark the conversation resolved. Push-back is autonomous — don't ask the user; the rebuttal itself is the audit trail. |
+| **Push back** | CR's claim is wrong (false positive on dynamic typing, stylistic preference that contradicts house style, misread of the code), or the suggestion would make the code worse | Reply on the thread with a one-paragraph technical rebuttal, cite the relevant convention, file, or line that supports your reasoning. `gh api -X POST repos/{owner}/{repo}/pulls/{N}/comments/{cid}/replies -f body=...`. Then mark the conversation resolved. Push-back is autonomous, don't ask the user; the rebuttal itself is the audit trail. |
 | **Defer** | Real but out of scope for this PR (refactor, follow-up improvement, separate concern) | Reply acknowledging + linking to a tracker issue (Linear, GitHub issue, etc.) created via the appropriate MCP tool. Mark resolved. |
 
 **Sycophancy guardrail.** If you find yourself fixing more than ~80% of CR comments without a single push-back across 2+ rounds, stop and re-read the comments cold. CR's signal is high but not perfect; pure acceptance is the failure mode this command exists to prevent. Validated push-backs are part of the deliverable.
@@ -58,13 +58,13 @@ For every unresolved CR (or human) comment, decide one of three dispositions. Wr
 
 ### 4. Apply fixes
 
-Group fixes into logical commits (one commit per concern, not one commit per comment). Use Conventional Commits. Don't squash CR fixes into the original feature commit — keep the review history readable.
+Group fixes into logical commits (one commit per concern, not one commit per comment). Use Conventional Commits. Don't squash CR fixes into the original feature commit, keep the review history readable.
 
 Each commit must pass the same review gates the original work passed:
 - If a `codex-stop-gate` or equivalent adversarial-review gate is configured for this project, it applies on every commit. Don't bypass without a written reason.
 - Local lints/tests run before push. If the project has a pre-push hook, let it run.
 
-**Never `--no-verify` to silence a failing hook.** If a hook blocks the push, the hook is reporting a real problem — fix it or escalate (§ 8).
+**Never `--no-verify` to silence a failing hook.** If a hook blocks the push, the hook is reporting a real problem, fix it or escalate (§ 8).
 
 ### 5. Push and wait
 
@@ -84,9 +84,9 @@ This prevents infinite-loop drain on a genuinely contentious PR.
 
 The PR is mergeable when ALL of:
 
-- `gh pr checks <N>` — all required checks green
-- `gh pr view <N> --json mergeable` — `MERGEABLE`
-- `gh pr view <N> --json reviewDecision` — `APPROVED`, or `null` (no human review required by branch protection). If `REVIEW_REQUIRED` and a human reviewer hasn't approved yet, escalate (§ 8); do NOT self-approve or merge.
+- `gh pr checks <N>`: all required checks green
+- `gh pr view <N> --json mergeable`: `MERGEABLE`
+- `gh pr view <N> --json reviewDecision`: `APPROVED`, or `null` (no human review required by branch protection). If `REVIEW_REQUIRED` and a human reviewer hasn't approved yet, escalate (§ 8); do NOT self-approve or merge.
 - All CR conversations resolved or have a reasoned reply + closed thread
 - No new CR comments since the last push
 
@@ -114,12 +114,12 @@ gh pr view <N> --json state,mergedAt,mergeCommit  # state should be MERGED
 Stop the loop and ask the user when ANY:
 
 - **5-round cap** reached without convergence (§ 5)
-- **Human reviewer left blocking comments** — surface them verbatim, don't paraphrase or auto-act
+- **Human reviewer left blocking comments**: surface them verbatim, don't paraphrase or auto-act
 - **Branch protection requires approval** and no human has approved (don't self-approve)
 - **Ambiguous merge conflict** the strategy isn't obvious for (§ 2)
 - **Pre-push hook fails for a reason you can't fix** (CI infra issue, missing secret, environment problem)
-- **CR keeps regenerating the same finding after a push-back** — third repeat means CR genuinely disagrees and the call is yours, not mine
-- **Push-back reply gets a reasoned counter-argument from a human** — human enters the loop, autonomy exits
+- **CR keeps regenerating the same finding after a push-back**: third repeat means CR genuinely disagrees and the call is yours, not mine
+- **Push-back reply gets a reasoned counter-argument from a human**: human enters the loop, autonomy exits
 - **A finding crosses out of scope into a multi-PR-sized concern** (architectural change, schema migration, security-sensitive refactor)
 
 Escalation format: state which trigger fired, what's been done so far, what the remaining options are, and what you'd recommend. Don't make the user dig.
@@ -146,9 +146,9 @@ Autonomous mode is broad permission to act, not a license to skip review or take
 - **Never force-push.** No exceptions in this command. If the situation seems to require it, escalate.
 - **Never close the PR** or modify its title/description. The PR identity is the user's.
 - **Never approve your own PR** programmatically. Self-approval defeats the point of review gates even when allowed.
-- **Never self-merge when human review is required.** If branch protection sets `REVIEW_REQUIRED`, the merge waits for a human approval — escalate per § 8.
-- **Surface human review comments verbatim.** Humans aren't in the autonomous loop — escalate, don't auto-respond.
-- **Respect adversarial-review gates** on every push. CR loops are exactly the moment where bypassed review compounds — small fixes are deceptively easy to ship without adversarial coverage.
+- **Never self-merge when human review is required.** If branch protection sets `REVIEW_REQUIRED`, the merge waits for a human approval, escalate per § 8.
+- **Surface human review comments verbatim.** Humans aren't in the autonomous loop: escalate, don't auto-respond.
+- **Respect adversarial-review gates** on every push. CR loops are exactly the moment where bypassed review compounds, small fixes are deceptively easy to ship without adversarial coverage.
 - **Merge only via the project's allowed strategy.** Detect from `gh repo view`, don't assume.
 - **`--delete-branch` is fine on merge** (remote branch only). Local cleanup is `/jm-wrap`'s job.
 

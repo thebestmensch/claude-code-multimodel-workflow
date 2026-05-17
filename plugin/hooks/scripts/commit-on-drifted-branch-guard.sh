@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PreToolUse on Bash — block `git commit` when committing on a primary
+# PreToolUse on Bash, block `git commit` when committing on a primary
 # checkout that's drifted off the default branch (main/master).
 #
 # Origin: 2026-05-02 retro. SessionStart fired the drift warning at
@@ -12,7 +12,7 @@
 #
 # Behavior:
 # - Triggers only on `git commit` (token-adjacent), skips `--amend`
-# - Skips when in a linked worktree (drift impossible — convention)
+# - Skips when in a linked worktree (drift impossible, convention)
 # - Skips when on the default branch
 # - Skips when the operation isn't a primary-checkout drift
 # - Otherwise: BLOCK with the SessionStart drift message + a directive
@@ -33,12 +33,12 @@
 #            echo 'reason' > /tmp/cc-gates/<session>/skip_commit_drift_gate
 #       b. User approves in their own shell (the `!` prefix matters):
 #            ! echo approved > /tmp/cc-gates/<session>/bypass_commit_drift_approved
-#     Claude cannot bypass alone — step (b) runs in the user's shell.
+#     Claude cannot bypass alone, step (b) runs in the user's shell.
 #     Both files are consumed by commit-gate-cleanup.sh on successful commit.
 #     Why a drift-specific approval (not the shared `bypass_approved`):
 #     `bypass_approved` also releases pre-commit-gate.sh's visual-qa /
 #     code-review checks. A drift approval (branch/topic fit) and a QA
-#     approval (UI was reviewed) are different intents — sharing the token
+#     approval (UI was reviewed) are different intents, sharing the token
 #     would let a drift bypass silently waive QA. Codex review caught this.
 
 set -o pipefail
@@ -66,7 +66,7 @@ except Exception:
     pass
 ' 2>/dev/null)
 
-# Two-step bypass — REQUIRES BOTH a Claude-written reason AND a drift-specific
+# Two-step bypass. REQUIRES BOTH a Claude-written reason AND a drift-specific
 # user approval. Uses bypass_commit_drift_approved (not the shared
 # bypass_approved) so a drift approval cannot silently waive pre-commit-gate's
 # visual-qa / code-review requirements.
@@ -85,7 +85,7 @@ if [ -n "$session_id" ]; then
   fi
 fi
 
-# Token-level match — `git commit` must be ADJACENT argv tokens.
+# Token-level match, `git commit` must be ADJACENT argv tokens.
 # Also detect `--amend` (amending a commit doesn't change branch state).
 match_info=$(printf '%s' "$command" | /usr/bin/python3 -c '
 import shlex, sys

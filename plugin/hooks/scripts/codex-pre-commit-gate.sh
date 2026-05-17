@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pre-commit gate — blocks `git commit` when substantive code edits are about
+# Pre-commit gate, blocks `git commit` when substantive code edits are about
 # to be committed without a Codex cross-provider *diff* review having landed
 # in context. Mirrors the freshness + bypass semantics of codex-stop-gate.sh
 # but fires at the right moment: BEFORE the commit, not at session end.
@@ -19,7 +19,7 @@
 # Bash-mediated edit closure: prior to firing, runs the augmentation helper
 # against `git diff --cached` so files staged via `sed -i` / generators /
 # `tee` / shell-driven patches are appended to edited_files. The downstream
-# freshness logic then treats them as real edits — closing the gap that
+# freshness logic then treats them as real edits, closing the gap that
 # previously left them invisible. Edit|Write paths still come through
 # track-edited-files.sh; this only adds what the tool tracker missed.
 #
@@ -43,7 +43,7 @@ edited_file="$gate_dir/edited_files"
 # cached AND worktree:
 #   cached   → catches plain `git commit` (pre-staged via `git add`).
 #   worktree → catches `git commit -a` / `-am` / `--all` (git stages tracked
-#              modifications during the commit, *after* PreToolUse — at
+#              modifications during the commit, *after* PreToolUse, at
 #              hook-fire time those edits aren't in the index yet, so cached
 #              alone misses them). Worktree mode also picks up untracked
 #              files created by generators / `tee > new.py`.
@@ -52,7 +52,7 @@ edited_file="$gate_dir/edited_files"
 # Repo discovery: the augmenter uses its own cwd to find the repo. When the
 # user's bash command is `cd X && git commit` or `git -C X commit`, the
 # augmenter inherits the HARNESS cwd (not the bash subprocess's cwd) and
-# evaluates the wrong repo — empty staged diff → silent gate bypass. Extract
+# evaluates the wrong repo, empty staged diff → silent gate bypass. Extract
 # the target repo from $command and cd into it before invoking the augmenter.
 # Defaults to $PWD when the command has neither `cd` nor `-C` (the original
 # behavior). Closes Codex slice-4 H2 finding.
@@ -65,7 +65,7 @@ repo_dir="${repo_dir:-$PWD}"
 
 # Same freshness gate as codex-stop-gate.sh: BOTH dispatched AND handled
 # markers must be fresher than the most recent tracked edit. Logic copied
-# verbatim — keep them in lockstep so the two gates can never disagree about
+# verbatim, keep them in lockstep so the two gates can never disagree about
 # what counts as "covered".
 if [ -f "$gate_dir/codex_diff_handled" ] \
    && [ -f "$gate_dir/codex_diff_dispatched" ] \
@@ -74,7 +74,7 @@ if [ -f "$gate_dir/codex_diff_handled" ] \
   exit 0
 fi
 
-# Reasoned bypass — must name a real reason, must be fresher than the latest
+# Reasoned bypass, must name a real reason, must be fresher than the latest
 # edit. Same file as the stop-gate (skip_codex_gate) so a single bypass
 # satisfies both moments.
 if [ -f "$gate_dir/skip_codex_gate" ] \
@@ -91,7 +91,7 @@ fi
 code_files=$(sort -u "$edited_file" || true)
 [ -z "$code_files" ] && exit 0
 
-# Codex unavailability handling — same fail-closed-by-default logic as the
+# Codex unavailability handling, same fail-closed-by-default logic as the
 # stop-gate. Without an explicit FAIL_OPEN opt-in, refuse to silently bypass
 # when codex is not callable.
 # Internal probe budget kept under the hook's outer timeout so the script can
