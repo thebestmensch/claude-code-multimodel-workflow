@@ -43,6 +43,15 @@ If retro ran, it already ran the audit. Don't re-run. If you skipped retro, you 
 
 For every line in retro's "Deferred (optional)" and "Suggested next steps" blocks, classify into one of three buckets. Announce each bucket inline.
 
+**Session-scope filter (apply BEFORE bucket classification).** A deferred only earns a bucket if it traces to *this* session's work. Drop (don't ticket, don't execute) any candidate that:
+
+- References a file or surface this session never touched — no `Read`/`Edit`/`Write`, no `Bash` command that named it (grep, git, tests, linters), no commit authored this session. Session evidence is anything from this session's tool outputs or transcript, not just file-opening tools
+- Restates a pre-existing `TODO` / `FIXME` comment that was already in the repo at session start (not authored this session per `git blame`)
+- Belongs to a parallel session's branch / worktree / PR that this session didn't touch
+- Is a free-associated "we should also do X" idea that didn't come up while doing this session's actual work
+
+Why: wrap clears *this* session's loose ends. Ticketing residue from another session double-counts work the other session owns, and pollutes the tracker if both sessions wrap. Surface filtered items in the report under "Dropped" with a one-line reason (`outside session scope` / `pre-existing TODO at <path:line>` / `from another session`); don't ticket them.
+
 | Bucket | Criteria | Action |
 |---|---|---|
 | **Trivial, execute now** | Safe, reversible, in scope, no user decision needed. Same criteria as retro § 7d "execute, don't list", but in practice retro already executed those; this catches anything retro chose to surface that could in fact be done inline (often because retro was conservative or new info has surfaced since). | Do the work. Re-run any relevant verification. Commit if it produces a diff. |
