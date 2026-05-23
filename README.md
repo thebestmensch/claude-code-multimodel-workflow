@@ -1,5 +1,7 @@
 # claude-code-multimodel-workflow
 
+![claude-code-multimodel-workflow — Claude, Codex, and CodeRabbit on the same diff](.github/social-preview.png)
+
 A redistributable Claude Code workflow package. Routes diffs through Claude, Codex, and CodeRabbit with pre-built dispatch rules, project-aware reviewers, codified discipline patches, and the slash commands and agents that hold it all together.
 
 > **Status:** v0.2.0. Repo renamed from `jm-workflow` for OSS clarity. See [SPEC.md](./SPEC.md) for the full specification and roadmap.
