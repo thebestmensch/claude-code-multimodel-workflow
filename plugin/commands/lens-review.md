@@ -17,7 +17,7 @@ Run a lensed code review on recent changes. Automatically detects which review l
 
 ## Default Selection Rule
 
-The default range MUST match what is about to be committed, so a `/code-review` immediately before `/commit` actually reviews the diff that will be committed:
+The default range MUST match what is about to be committed, so a `/lens-review` immediately before `/commit` actually reviews the diff that will be committed:
 
 1. If `git diff --cached` is non-empty → review staged diff (`git diff --cached`).
 2. Else if `git diff` is non-empty → review unstaged working-tree diff (`git diff`).

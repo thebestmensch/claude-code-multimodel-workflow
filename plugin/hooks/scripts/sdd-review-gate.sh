@@ -60,7 +60,7 @@ if [ -f "$gate_dir/sdd_needs_code_review" ]; then
   "hookSpecificOutput": {
     "hookEventName": "PreToolUse",
     "permissionDecision": "deny",
-    "permissionDecisionReason": "🚫 Task completion blocked: implementer dispatched without code review. Dispatch /code-review or a code quality reviewer before marking complete. To bypass, write a reason: echo 'reason' > $gate_dir/skip_sdd_gate (logged and surfaced in retros)"
+    "permissionDecisionReason": "🚫 Task completion blocked: implementer dispatched without code review. Dispatch /lens-review or a code quality reviewer before marking complete. To bypass, write a reason: echo 'reason' > $gate_dir/skip_sdd_gate (logged and surfaced in retros)"
   }
 }
 EOF

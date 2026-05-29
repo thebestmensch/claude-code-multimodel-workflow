@@ -84,9 +84,9 @@ Path rewrite applied two places:
 
 **Wired but not in JM's settings.json (4 added):** `commit-scope-check.sh` (PreToolUse Bash), `commit-gate-cleanup.sh` (PostToolUse Bash), `devils-advocate-plan-gate.sh` (PreToolUse ExitPlanMode), `devils-advocate-plan-cleanup.sh` (PostToolUse ExitPlanMode). Useful patterns for adopters.
 
-### Rules: 5 ship-able
+### Rules: 7 ship-able
 
-`advisory-agents-dispatch.md`, `agent-dispatch.md`, `code-review-dispatch.md`, `codex-dispatch.md`, `visual-qa-dispatch.md`
+`advisory-agents-dispatch.md`, `agent-dispatch.md`, `code-review-dispatch.md`, `codex-dispatch.md`, `visual-qa-dispatch.md`, and (added v0.3.0) `codex-design-dispatch.md` + `codex-design-brief-template.md` (proposal-time cross-provider design recon; pairs with the `tools/codex-design-dispatch.sh` wrapper).
 
 **Don't ship:** `workspace-layout.md` (jm/oom tmux session names)
 

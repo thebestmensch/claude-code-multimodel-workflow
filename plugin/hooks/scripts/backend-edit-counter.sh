@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Backend Edit Counter (PostToolUse on Edit|Write)
 # Counts edits to production code/infra so pre-commit-gate.sh can require a
-# /code-review dispatch on substantive commits. Covers:
+# /lens-review dispatch on substantive commits. Covers:
 #   - Python anywhere under services/<svc>/ (app/, CLI packages like tickets/)
 #   - Container/deploy infra: Dockerfile, docker-compose*.yml, service shell scripts
 #   - Repo-wide infra: justfile, GitHub Actions workflows

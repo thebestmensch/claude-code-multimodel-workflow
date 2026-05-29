@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # mobile-pattern-stop-gate - Stop hook that blocks turn end when mobile-app
-# files were edited but /code-review has not been dispatched since the
+# files were edited but /lens-review has not been dispatched since the
 # latest mobile edit. Only relevant for projects that contain a mobile-app
 # directory layout - graceful no-op otherwise.
 #
@@ -44,7 +44,7 @@ mobile_files=$(sort -u "$edited_file" | grep -E 'mobile-app/.*\.(tsx|ts)$' \
 
 file_count=$(echo "$mobile_files" | wc -l | tr -d ' ')
 
-# Deeper review dispatch (agent or /code-review)
+# Deeper review dispatch (agent or /lens-review)
 #
 # Staleness pivot must be **mobile-only**. Earlier versions used `edited_files`
 # mtime as the pivot, but that file is appended on every edit including non-
@@ -97,7 +97,7 @@ reason_text=$(cat <<EOF
 Files:
 $mobile_files
 
-Dispatch /code-review on the diff. A code reviewer catches semantic patterns (Pressable nesting, worklet correctness, navigation footguns) the type checker cannot.
+Dispatch /lens-review on the diff. A code reviewer catches semantic patterns (Pressable nesting, worklet correctness, navigation footguns) the type checker cannot.
 
 If the deeper review is genuinely inapplicable (e.g., trivial type-only change, comment fix), request bypass:
   echo "reason" > $gate_dir/skip_mobile_pattern_gate

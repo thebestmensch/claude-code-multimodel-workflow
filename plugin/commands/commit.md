@@ -16,11 +16,11 @@ Before running the commit process, verify mandatory reviews actually covered the
    ```
 
 2. **Code review identity check:**
-   - Find the most recent `/code-review` (or code-reviewer agent) output in this conversation.
+   - Find the most recent `/lens-review` (or code-reviewer agent) output in this conversation.
    - Read its `Range:` and `Files reviewed:` lines.
    - The review MUST have been run against `staged` scope (or against an explicit range that matches the staged file list).
    - The `Files reviewed:` list MUST equal the staged file list from step 1 (sorted comparison).
-   - If NO review fired, OR `Range:` was `last-commit`/`worktree` while staging is non-empty, OR the file lists differ → STOP, dispatch `/code-review` (it now defaults to staged when staged is non-empty), then re-run this gate.
+   - If NO review fired, OR `Range:` was `last-commit`/`worktree` while staging is non-empty, OR the file lists differ → STOP, dispatch `/lens-review` (it now defaults to staged when staged is non-empty), then re-run this gate.
 
 3. **Visual QA:** If the staged changes include CSS, HTML templates, JSX/TSX, or any visual/UI files, apply the same identity check against the most recent `/visual-qa` output. The reviewed surface must correspond to the staged UI files.
 

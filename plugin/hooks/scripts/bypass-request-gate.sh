@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # bypass-request-gate - blocks writing to skip_*_gate before any QA attempt.
 #
-# Rationale: feedback_never_default_bypass - run /visual-qa or /code-review
+# Rationale: feedback_never_default_bypass - run /visual-qa or /lens-review
 # first, bypass last. This hook enforces "QA first" before a bypass can be
 # requested for any of the gates below.
 #
@@ -142,7 +142,7 @@ fi
 # Map each gate to the agent/skill the user expects Claude to have tried first
 case "$target" in
   skip_commit_gate|skip_sdd_gate)
-    advice="Run /visual-qa or /code-review first." ;;
+    advice="Run /visual-qa or /lens-review first." ;;
   skip_visual_qa_gate)
     advice="Run /visual-qa first." ;;
   skip_interaction_qa_gate)

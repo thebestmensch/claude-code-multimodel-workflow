@@ -22,7 +22,7 @@ if [ "$tool_name" = "Agent" ]; then
     *visual-qa*|*visual\ qa*|*vqa*) touch "$gate_dir/visual_qa_dispatched" ;;
   esac
   case "$desc" in
-    *code-review*|*code\ review*|*code\ reviewer*) touch "$gate_dir/code_review_dispatched" ;;
+    *lens-review*|*code-review*|*code\ review*|*code\ reviewer*) touch "$gate_dir/code_review_dispatched" ;;
   esac
   case "$desc" in
     *brainstorm*) touch "$gate_dir/brainstorm_dispatched" ;;
@@ -51,7 +51,7 @@ if [ "$tool_name" = "Agent" ]; then
     *devils-advocate*) touch "$gate_dir/devils_advocate_dispatched" ;;
   esac
   case "$subagent_type" in
-    *code-reviewer*|*code-review*) touch "$gate_dir/code_review_dispatched" ;;
+    *lens-review*|*code-reviewer*|*code-review*) touch "$gate_dir/code_review_dispatched" ;;
   esac
   case "$subagent_type" in
     *visual-qa*) touch "$gate_dir/visual_qa_dispatched" ;;
@@ -71,7 +71,7 @@ elif [ "$tool_name" = "Skill" ]; then
     *visual-qa*|*visual\ qa*|*vqa*) touch "$gate_dir/visual_qa_dispatched" ;;
   esac
   case "$skill" in
-    *code-review*|*code\ review*)
+    *lens-review*|*code-review*|*code\ review*)
       touch "$gate_dir/code_review_dispatched"
       # Also clear the SDD code review flag (skill-based review counts)
       rm -f "$gate_dir/sdd_needs_code_review"

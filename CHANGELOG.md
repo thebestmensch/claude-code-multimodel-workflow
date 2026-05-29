@@ -6,6 +6,22 @@ All notable changes to `claude-code-multimodel-workflow` documented here. Format
 
 (nothing yet)
 
+## [0.3.0] - 2026-05-29
+
+Sync release: ports the workflow refinements made since v0.2.0 and adds the proposal-time design-recon surface. Most changes are non-breaking; the `/code-review` → `/lens-review` rename is breaking for adopters who invoke the command by name (see below).
+
+### Added
+- **Codex design-recon surface** (proposal-time cross-provider design review): `rules/codex-design-dispatch.md` + `rules/codex-design-brief-template.md`, plus the `tools/codex-design-dispatch.sh` wrapper (thoughtful-frontend-designer envelope: named fonts, pinned hex, mathematically verified WCAG contrast, Cornerstone/Important/Polish tiers). Sibling to the diff-review wrapper; opt-in (requires the Codex CLI / `openai-codex` plugin).
+- **`tools/codex-plan-critique.sh`** wrapper: read-only adversarial plan-critique envelope (`task` mode), referenced by the new Codex Second Seat dispatch.
+- **Codex Second Seat** section in `rules/advisory-agents-dispatch.md`: co-dispatch Codex plan-critique alongside the devil's advocate when the complexity gate fires (cross-provider non-overlap signal at plan time).
+- `rules/codex-dispatch.md` gaps **#9** (bypass mtime race), **#10** (CC 2.1.147 stop-hook block cap = 8), **#11** (stale gate-dir `session_id`; grep `edited_files` to find the active gate), plus the **2-fix-rounds-per-file** narrowing-edge-case push-back rule and a Boundary cross-ref to `codex-design-dispatch.md`.
+- `rules/code-review-dispatch.md`: documents the built-in `/code-review --comment` (CC 2.1.147+) as a post-push CodeRabbit complement.
+
+### Changed
+- **BREAKING (adopters):** the plugin's lensed-review command renamed `/code-review` → `/lens-review` to avoid colliding with CC 2.1.147's new *built-in* `/code-review`. Command file, all in-hook dispatch advice, the rule framing, and the README reference now use `/lens-review`; `dispatch-tracker.sh` accepts both `/lens-review` and `/code-review` for gate clearance. Adopters who invoked `/code-review` by name should switch to `/lens-review`.
+- `rules/codex-dispatch.md` Bypass Mechanism: replaced the unreliable `ls -td /tmp/cc-gates/*/ | head -1` gate-dir lookup with "copy the path the gate's error message emits" guidance (the `ls -td` heuristic silently picks stale gate dirs).
+- `rules/agent-dispatch.md`: dropped the stale `superpowers:code-reviewer` example agent (removed upstream in superpowers v5.1.0); example now uses `codex:codex-rescue`.
+
 ## [0.2.0] - 2026-05-16
 
 Renamed from `jm-workflow` → `claude-code-multimodel-workflow` for OSS clarity. The original name read as a JM-personal repo; the new name describes what the plugin actually does (route diffs through Claude + Codex + CodeRabbit with dispatch gates and bypass discipline).

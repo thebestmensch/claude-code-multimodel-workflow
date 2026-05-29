@@ -37,7 +37,7 @@ case "$desc" in
 esac
 
 # Code reviewer: description contains "code review" or "quality review"
-# Also cleared by /code-review skill dispatch (handled by dispatch-tracker.sh
+# Also cleared by /lens-review skill dispatch (handled by dispatch-tracker.sh
 # which touches code_review_dispatched, but this flag is separate).
 case "$desc" in
   *visual*|*qa*|*polish*|*tone*|*bug*|*spec*) ;;

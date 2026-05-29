@@ -110,6 +110,7 @@ Agent({
 - **Background only** unless the diff is truly tiny (≤1 file, ≤20 lines).
 - **Present findings, never auto-act.** Mirror the Polish QA / Tone QA pattern: show what Codex flagged, group by severity, let the user decide what to fix. The plugin's `codex-result-handling` skill formalizes this; the hook does not.
 - **Don't loop.** If Codex flags X, you fix X, do not re-dispatch Codex on the same diff in the same session. That's the loop-drain failure mode.
+- **Narrowing-edge-case pattern = push-back time.** If Codex's findings across successive rounds on the same file/feature progressively narrow (round 1 broad race → round 2 ordering-specific race → round 3 same-score-double-tap-within-100ms race), that pattern signals diminishing-real-risk territory. Cap at **2 fix-rounds per file** before defaulting to push-back; the third finding is almost certainly real but rare enough to defer or document rather than fix mid-PR. Validated on a rating-toggle race: 3 rounds on the same JS race, each contrived narrower than the last; should have pushed back at round 3 rather than implementing a pending-state tracker for a sub-100ms double-tap edge case.
 
 ## How to Use Results
 
@@ -128,7 +129,7 @@ To skip the gate, write a real reason to `/tmp/cc-gates/$SESSION_ID/skip_codex_g
 echo "doc-only change, no executable code" > "/tmp/cc-gates/$SESSION_ID/skip_codex_gate"
 ```
 
-`$SESSION_ID` is provided to hook scripts via the stdin JSON payload but is NOT in the environment of a Bash tool call. From the model side, look up the active session dir via `SID="$(ls -td /tmp/cc-gates/*/ 2>/dev/null | head -1)"`, then write to `"${SID}skip_codex_gate"`.
+`$SESSION_ID` is provided to hook scripts via the stdin JSON payload but is NOT in the environment of a Bash tool call. **Copy the path the gate's error message emits inline**: the codex-stop-gate / pre-commit-gate output always includes the exact `/tmp/cc-gates/<SID>/skip_codex_gate` path verbatim. `ls -td /tmp/cc-gates/*/ | head -1` is unreliable: it picks the most-recently-touched gate-dir, frequently a stale one, and silently writes the bypass to the wrong path (see gap #11 in Gate Scope below for the grep-by-`edited_files` recovery when the printed path is itself stale).
 
 Valid bypass reasons (each must name *why* the gate is wrong here, not just "skip"):
 
@@ -148,7 +149,7 @@ Invalid bypass reasons (these will be rejected at review time):
 
 ## Gate Scope and Known Limitations
 
-The `codex-stop-gate.sh` hook enforces "Codex diff dispatch happened" only for files tracked via `Edit|Write` PostToolUse hooks. Four known gaps the rule expects you to cover with discipline rather than enforcement:
+The `codex-stop-gate.sh` hook enforces "Codex diff dispatch happened" only for files tracked via `Edit|Write` PostToolUse hooks. Known gaps the rule expects you to cover with discipline rather than enforcement:
 
 1. **Bash-mediated mutations are invisible to the gate.** `sed -i`, `tee`, generators, formatters, code patches via shell, none of these append to `edited_files`. If you mutate code via Bash on a high-stakes surface (payments / auth / migrations / user-facing copy / etc.), dispatch Codex manually even when the gate is silent. The Red Flags table still applies.
 
@@ -165,6 +166,20 @@ The `codex-stop-gate.sh` hook enforces "Codex diff dispatch happened" only for f
 7. **Hung jobs: bail-fast at ~5min of silent log, don't retry the same diff.** *(Auto-closed by `plugin/tools/codex-dispatch.sh`: polls every 90s, cancels the job + emits a bypass template after 3 consecutive verifying-phase polls with stable log size. Raw-companion fallback still requires manual polling.)* `codex-companion.mjs status` showing `phase: verifying` for many minutes while the log file stops growing (`wc -l` stable across checks) is a deterministic hang, not a transient slowdown, the same input reproduces it. Recovery: `node …/codex-companion.mjs cancel <jobId>`, then write a bypass invoking the "API unavailable" clause AND a second sentence naming the actual review evidence on this diff (regression tests passing, mirrors a documented pattern, low-blast-radius surface, at least one concrete claim, not "I reviewed it myself"). **Two cancelled attempts is the cap *per diff*.** A third try on the same diff wastes the same ~10–12min and produces the same hang. The cap resets when the diff changes substantively. A fresh diff with new logic deserves a fresh attempt, since the hang correlates with specific input shape, not with Codex's general availability.
 
 8. **A completed review on the unstaged diff does NOT satisfy the gate once you `git add`.** The pre-commit + stop-gate hooks track whether a dispatch covered the currently-staged file set, not whether *some* review completed this session. Staging files after a successful adversarial-review (or `git restore --staged` + re-stage cycle) re-invalidates the gate's "covered" state even though the review evidence is sitting in `codex-companion.mjs result`. Symptom: gate fires with "results have not been retrieved into context" immediately after `git add`, even right after you fetched the result. Recovery: write a bypass citing the completed review, DO NOT re-dispatch. The "right answer to a stuck gate is bypass + existing evidence" rule supersedes the "always dispatch" default once a review has already happened on this diff.
+
+9. **Bypass mtime race: first commit attempt after writing `skip_codex_gate` almost always fails. Refresh and retry.** The pre-commit gate accepts the bypass only when `skip_codex_gate` is newer than `edited_files`, but the gate's own augmenter (`augment-edited-files.sh`, run in cached + worktree modes) appends any *new* tracked-but-not-canonical paths from `git diff` and bumps `edited_files` mtime BEFORE the bypass check. So the first commit attempt with a freshly-written bypass typically fires augmentation → new paths appended → `edited_files` mtime bumps past bypass mtime → bypass stale → gate fires. The augmentation is idempotent: once those paths are in the set, the second commit attempt augments to no-op and the bypass holds. Symptom: write a clear-reason bypass right before commit, gate blocks anyway with the standard "results have not been retrieved" message; `stat` shows `edited_files` newer than `skip_codex_gate` by a few seconds. Recovery: `echo '<reason>' > $gate_dir/skip_codex_gate` AGAIN (refreshes mtime), then `git commit` immediately; the second attempt passes. Common triggers: brand-new file deletions, files edited via primary-checkout path then committed from a worktree (worktree paths are "new" to the tracker even though the underlying file edits are tracked under different absolute paths). Do NOT pre-augment `edited_files` manually to skip the first attempt; appending fabricated entries reads as a safety-check bypass. Bare token rule: "first attempt fails after fresh bypass; touch bypass + retry once."
+
+10. **CC 2.1.147 stop-hook block cap: 8 consecutive blocks then turn ends.** As of CC 2.1.147, a stop hook that returns `block` repeatedly is force-cleared after 8 consecutive blocks, ending the turn with a warning. Direct backstop for the `codex-stop-gate` / `visual-qa-gate` / `pre-commit-gate` infinite-loop footgun that gaps #8 + #9 both describe: a stale/missing/raced bypass file no longer wedges a session forever. Override via `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP=<N>` if a workflow genuinely needs more headroom. **This does not change the recovery procedure** in gaps #8 + #9 (still write a fresh bypass with evidence, still don't re-dispatch), but it caps the worst case at 8 retries instead of unbounded. If you hit the cap, the gate's intent was almost certainly correct and the bypass content was wrong; rewrite the bypass, don't disable the cap.
+
+11. **The gate's printed `session_id` in the bypass hint can be stale; `/tmp/cc-gates/current` can be stale too. Find the real active gate by grepping `edited_files` content.** The pre-commit and stop-gate hooks embed the session_id at hook-fire time into their "bypass with" hint message. After `/compact`, after a long session, or when multiple gate dirs accumulate under `/tmp/cc-gates/`, the hint's session_id and the `current` symlink's target can both refer to dead gate dirs while the actual active hook fires under a *different* session_id. Writing the bypass to the wrong dir leaves the gate blocking even though the bypass appears successful. Symptom: bypass written, immediate retry still blocks, `stat` shows the bypass file exists with current mtime, but in a dir the hook isn't reading. Recovery one-liner to find the active gate dir for a specific file:
+
+    ```bash
+    for d in /tmp/cc-gates/*/; do
+      [ -f "$d/edited_files" ] && grep -lF "<absolute-path-of-blocked-file>" "$d/edited_files" >/dev/null 2>&1 && echo "$d"
+    done
+    ```
+
+    Write the bypass to whichever dir(s) come back. Don't trust the hint's session_id; verify against `edited_files` content.
 
 A future iteration may close these gaps via a SessionStart-baselined augmenter. The naive `git status --porcelain` augmenter doesn't work, it false-positives on pre-existing dirty work that the session didn't touch (validated empirically; see this rule's revision history).
 
@@ -188,6 +203,7 @@ This rule covers **commit-time cross-provider review**. It does not cover:
 
 - Visual / accessibility / tone QA → see `visual-qa-dispatch.md`
 - Plan or design challenge before brainstorming → see `advisory-agents-dispatch.md` (devil's advocate)
+- **Design proposals at the pre-implementation stage** (named fonts, pinned hex, verified contrast) → see `codex-design-dispatch.md`
 - In-session project-specific Claude reviewers → see `code-review-dispatch.md` and your project's `code-review-<project>.md` overlay
 - Generic code review at PR time → CodeRabbit owns this
 

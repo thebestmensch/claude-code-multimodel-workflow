@@ -130,7 +130,7 @@ if is_stale "$gate_dir/code_review_dispatched"; then
   "hookSpecificOutput": {
     "hookEventName": "PreToolUse",
     "permissionDecision": "deny",
-    "permissionDecisionReason": "🚫 Commit blocked: $scope_desc edited without code review. Dispatch /code-review first, then re-run the commit; the gate will clear automatically once the review marker is fresh.\n\nDO NOT write skip_commit_gate just because the commit was blocked. Only write a skip if /code-review is genuinely inapplicable (e.g. pure docs commit) AND you've posted evidence for that in chat.\n\nTo request bypass (only if review truly doesn't apply): echo 'REASON: docs-only|whitespace|trivial-config' > $gate_dir/skip_commit_gate\n(skip-request template is in your clipboard via pbcopy.)\nThen user approves: ! echo approved > $gate_dir/bypass_approved"
+    "permissionDecisionReason": "🚫 Commit blocked: $scope_desc edited without code review. Dispatch /lens-review first, then re-run the commit; the gate will clear automatically once the review marker is fresh.\n\nDO NOT write skip_commit_gate just because the commit was blocked. Only write a skip if /lens-review is genuinely inapplicable (e.g. pure docs commit) AND you've posted evidence for that in chat.\n\nTo request bypass (only if review truly doesn't apply): echo 'REASON: docs-only|whitespace|trivial-config' > $gate_dir/skip_commit_gate\n(skip-request template is in your clipboard via pbcopy.)\nThen user approves: ! echo approved > $gate_dir/bypass_approved"
   }
 }
 EOF

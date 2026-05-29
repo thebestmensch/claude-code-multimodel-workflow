@@ -15,20 +15,26 @@ The auto-firing reviewers come from the workspace's `code-review-*.md` overlay (
 
 **Non-code feature work** (runbook updates, slash-command rewrites, design-doc implementations): if the `superpowers` plugin is installed, invoke the `superpowers:requesting-code-review` skill, which dispatches `Task (general-purpose)` with the reviewer persona/checklist from `superpowers:requesting-code-review/code-reviewer.md`. Without superpowers, dispatch a `general-purpose` agent with an explicit reviewer prompt instead. Pass the spec/plan as context. Skip outright only for trivial doc edits. (The legacy `superpowers:code-reviewer` named agent was removed in superpowers v5.1.0.)
 
-## Explicit `/code-review` (opt-in)
+## Explicit `/lens-review` (opt-in)
 
 When you want pre-PR coverage of the territory CodeRabbit also reviews (sanity-check before push, or unsure if CR will catch a subtle case):
 
-```
-Skill("code-review")                     # auto-detects lenses, runs base review
-Skill("code-review", args="security")    # force a lens
+```text
+Skill("lens-review")                     # auto-detects lenses, runs base review
+Skill("lens-review", args="security")    # force a lens
 ```
 
-The `/code-review` skill runs the base review and lens detection. Universal supplementary agents may fire alongside it when their triggers match.
+The `/lens-review` skill runs the base review and lens detection. Universal supplementary agents may fire alongside it when their triggers match.
+
+**Note on naming (CC 2.1.147+).** This plugin's lensed-dispatch command ships as `/lens-review`. CC 2.1.147 added a *built-in* `/code-review`, a different tool: effort-level correctness review with a `--comment` flag that posts findings as inline GitHub PR comments. The plugin command was named `lens-review` to avoid colliding with it. The two are complementary: `/lens-review` for pre-commit lensed dispatch, built-in `/code-review --comment` for pushing inline PR notes on an open branch.
+
+## Built-in `/code-review --comment` (post-push, opt-in)
+
+After a branch is pushed and a PR exists, run the CC built-in `/code-review --comment` to drop its findings as inline PR comments. Useful as a CodeRabbit complement on payment/auth/migration surfaces: cross-provider signal at PR time without waiting on CR. Effort levels: `/code-review low|medium|high`; `high` is the substantive pass worth the latency. Skip `--comment` to keep findings in-chat instead of posting to GitHub. (Requires CC 2.1.147+.)
 
 ## Universal Supplementary Agents (opt-in only)
 
-These do NOT auto-fire pre-commit. They run only when `/code-review` is invoked explicitly (the skill owns the trigger table and dispatch rules) or when you decide a change warrants pre-PR coverage beyond what auto-dispatch ran. Available types: `silent-failure-hunter`, `type-design-analyzer`, `concurrency-auditor`, `api-contract-reviewer`, `test-gap-analyzer`, `sentry-discipline-reviewer`.
+These do NOT auto-fire pre-commit. They run only when `/lens-review` is invoked explicitly (the skill owns the trigger table and dispatch rules) or when you decide a change warrants pre-PR coverage beyond what auto-dispatch ran. Available types: `silent-failure-hunter`, `type-design-analyzer`, `concurrency-auditor`, `api-contract-reviewer`, `test-gap-analyzer`, `sentry-discipline-reviewer`.
 
 ## Dispatch pattern (auto and opt-in)
 
@@ -39,7 +45,7 @@ Each reviewer gets the same diff scope, derived from when the dispatch fires:
 
 Use `model="sonnet"`, `run_in_background=true`.
 
-**Cap at 2 auto-dispatched reviewers per commit.** When more project-specific reviewers trigger, prioritize the highest-stakes ones (workspace overlay declares which). When `/code-review` is explicit, the cap is 3 (base review + 2 supplementary).
+**Cap at 2 auto-dispatched reviewers per commit.** When more project-specific reviewers trigger, prioritize the highest-stakes ones (workspace overlay declares which). When `/lens-review` is explicit, the cap is 3 (base review + 2 supplementary).
 
 ## How to Use Results
 

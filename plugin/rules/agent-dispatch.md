@@ -2,7 +2,7 @@
 
 When dispatching agents via the `Agent` tool, **always include `subagent_type`** in the tool call parameters. This field is required for the HUD status line to display meaningful agent labels.
 
-- If the agent is a specialized type (e.g., `Explore`, `devils-advocate`, or plugin-provided agents like `superpowers:code-reviewer` / `codex:codex-rescue` when those plugins are installed), use that type name
+- If the agent is a specialized type (e.g., `Explore`, `devils-advocate`, or plugin-provided agents like `codex:codex-rescue` when those plugins are installed), use that type name
 - If the agent is a general-purpose implementer or investigator, use `subagent_type: "general-purpose"`
 - Never omit `subagent_type`. The HUD falls back to a generic label when it's missing
 
@@ -10,7 +10,7 @@ This applies to all agent dispatches: SDD implementers, parallel agents, review 
 
 ## Verify the agent exists in the current project
 
-Before dispatching, confirm `subagent_type` is in the available-agents list for the active session. The list is in the system prompt (Agent tool description), and the set differs per project. Workspace-specific agents (e.g. domain reviewers, creative directors) only exist in workspaces that define them, and plugin-provided agents (e.g. `superpowers:code-reviewer`) only exist when the plugin is installed. Don't dispatch from training memory.
+Before dispatching, confirm `subagent_type` is in the available-agents list for the active session. The list is in the system prompt (Agent tool description), and the set differs per project. Workspace-specific agents (e.g. domain reviewers, creative directors) only exist in workspaces that define them, and plugin-provided agents (e.g. `codex:codex-rescue`) only exist when the plugin is installed. Don't dispatch from training memory.
 
 If the desired agent isn't available locally, fall back to `general-purpose` with a strong directive prompt, and tell the user up front rather than letting the dispatch fail.
 

@@ -14,6 +14,8 @@ Four reviewers, all `sonnet` (Polish QA optionally `opus`) in background:
 
 The skills own evaluation criteria and the philosophy/voice-guide loading.
 
+**Design-stage sibling:** `codex-design-dispatch.md` covers the *pre-implementation* design pass (Codex `task` mode with a thoughtful-designer envelope): named fonts, pinned hex, verified WCAG contrast on the proposal *before* code is written. Visual QA in this file covers *post-implementation* review on rendered pixels. Both fire across one ticket's lifecycle on high-stakes design work.
+
 ## When to trigger
 
 **Bug QA, every visual checkpoint:**

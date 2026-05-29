@@ -82,4 +82,4 @@ When all agents report their tasks complete:
 1. Mark all integration tasks as completed
 2. Send shutdown messages to all agents
 3. Report results to the user: what was built, what was tested, any follow-ups needed
-4. Dispatch code review via `/code-review` covering all changes
+4. Dispatch code review via `/lens-review` covering all changes

@@ -22,7 +22,7 @@ flowchart TD
     Implementers[implementer agents<br/>general-purpose · Explore · cavecrew · codex-rescue]:::agent
     GateWorktree{{HOOK<br/>parallel-cc-worktree-gate}}:::hook
     Verify[/superpowers:verification-before-completion/]:::skill
-    CodeReview[/code-review<br/>auto · lensed/]:::autocmd
+    CodeReview[/lens-review<br/>auto · lensed/]:::autocmd
     UiQA[/visual-qa · /accessibility-qa · /tone-qa<br/>auto if UI changed/]:::autocmd
     GateCodex{{HOOK<br/>codex-stop-gate}}:::hook
     Codex[Codex adversarial-review<br/>cross-provider, GPT-5.x]:::agent
@@ -130,7 +130,7 @@ claude plugin update claude-code-multimodel-workflow
 
 ## Slash commands
 
-Slash commands are the user-facing surface: what you type (`/visual-qa`), what Claude auto-invokes mid-flow (`/code-review`), and the personal wrap-up rituals at end of session.
+Slash commands are the user-facing surface: what you type (`/visual-qa`), what Claude auto-invokes mid-flow (`/lens-review`), and the personal wrap-up rituals at end of session.
 
 ### You invoke these
 
@@ -151,7 +151,7 @@ Slash commands are the user-facing surface: what you type (`/visual-qa`), what C
 
 | Command | What it does | When it fires |
 |---|---|---|
-| `/code-review` | Runs a lensed code review on the diff being committed (working tree + staged by default). Detects applicable review lenses (security, data-integrity, performance, …) from the changed files. | After verification, before commit. Auto-invoked per `code-review-dispatch.md`. |
+| `/lens-review` | Runs a lensed code review on the diff being committed (working tree + staged by default). Detects applicable review lenses (security, data-integrity, performance, …) from the changed files. Renamed from `/code-review` in v0.3.0 to avoid colliding with CC 2.1.147's built-in `/code-review`. | After verification, before commit. Auto-invoked per `code-review-dispatch.md`. |
 | `/visual-qa` | Two modes: **Bug QA** (broken rendering, anti-patterns; objective) and **Polish QA** (subjective design quality). | Auto-dispatches on UI checkpoints per `visual-qa-dispatch.md`. |
 | `/accessibility-qa` | WCAG 2.1 AA review on URL or screenshot: semantic HTML, ARIA, keyboard nav, contrast, screen reader experience. | At UI milestones when interactive elements / forms / nav / dynamic content changed. |
 | `/tone-qa` | Copy/voice review against the project's voice guide (`.claude/docs/voice-guide.md`). | At UI milestones when user-facing text changed. |
@@ -187,8 +187,9 @@ The rules layer is what makes the agents and slash commands *automatic*. Each ru
 |---|---|
 | `advisory-agents-dispatch.md` | Auto-dispatch `research-agent` and `devils-advocate` during brainstorming and plan-writing, complexity gate, announcement requirement, how to fold results back in. |
 | `agent-dispatch.md` | Always pass `subagent_type` and use `isolation: "worktree"` for write-mode agents. The discipline that keeps the HUD readable and prevents git-index collisions across parallel sessions. |
-| `code-review-dispatch.md` | Auto-dispatch project-specific reviewers pre-commit; reserve universal supplementary agents for explicit `/code-review`. Defines the 2-reviewer-per-commit cap and the CodeRabbit boundary. |
-| `codex-dispatch.md` | Cross-provider adversarial review via Codex (GPT-5.x). The most prescriptive rule in the set: when adversarial is mandatory, the Red Flags table of rationalizations to reject, valid bypass reasons, the eight known gate gaps. |
+| `code-review-dispatch.md` | Auto-dispatch project-specific reviewers pre-commit; reserve universal supplementary agents for explicit `/lens-review`. Defines the 2-reviewer-per-commit cap and the CodeRabbit boundary. |
+| `codex-dispatch.md` | Cross-provider adversarial review via Codex (GPT-5.x). The most prescriptive rule in the set: when adversarial is mandatory, the Red Flags table of rationalizations to reject, valid bypass reasons, the eleven known gate gaps. |
+| `codex-design-dispatch.md` | Dispatch Codex `task`-mode design recon on a UI proposal *before* implementation (named fonts, pinned hex, verified WCAG contrast, Cornerstone/Important/Polish tiers). Pairs with `codex-design-brief-template.md` (brief skeleton) and the `tools/codex-design-dispatch.sh` wrapper. Opt-in (Codex CLI). |
 | `visual-qa-dispatch.md` | Fire the right QA reviewers at the right checkpoint (Bug QA every checkpoint, Polish/A11y/Tone at milestones), how to read recommendation-tier vs. severity-tier findings, and the 2-pass cap to avoid infinite correction loops. |
 
 ---
