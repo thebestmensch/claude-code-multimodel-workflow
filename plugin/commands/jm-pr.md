@@ -101,7 +101,7 @@ Detect the project's merge strategy and run the merge:
 gh pr merge <N> --<strategy> --delete-branch
 ```
 
-Strategy precedence: project CLAUDE.md > repo settings (prefer the most restrictive allowed: squash > rebase > merge) > squash as default. `--delete-branch` cleans up the remote branch after merge; local cleanup happens in `/jm-wrap`.
+Strategy precedence: project CLAUDE.md > repo settings (prefer the most restrictive allowed: squash > rebase > merge) > squash as default. `--delete-branch` cleans up the remote branch after merge; local cleanup happens in `/jm-remember-session`.
 
 After merge, verify:
 
@@ -150,8 +150,8 @@ Autonomous mode is broad permission to act, not a license to skip review or take
 - **Surface human review comments verbatim.** Humans aren't in the autonomous loop: escalate, don't auto-respond.
 - **Respect adversarial-review gates** on every push. CR loops are exactly the moment where bypassed review compounds, small fixes are deceptively easy to ship without adversarial coverage.
 - **Merge only via the project's allowed strategy.** Detect from `gh repo view`, don't assume.
-- **`--delete-branch` is fine on merge** (remote branch only). Local cleanup is `/jm-wrap`'s job.
+- **`--delete-branch` is fine on merge** (remote branch only). Local cleanup is `/jm-remember-session`'s job.
 
 ## Boundary
 
-This command handles **post-open through merge** PR lifecycle. For pre-open PR creation, use `gh pr create` directly. For post-merge cleanup (local branch deletion, worktree cleanup, deferred-ticket handling), use `/jm-wrap`.
+This command handles **post-open through merge** PR lifecycle. For pre-open PR creation, use `gh pr create` directly. For post-merge cleanup (local branch deletion, worktree cleanup, deferred-ticket handling), use `/jm-remember-session`.

@@ -42,7 +42,7 @@ Slice-3 audit reclassified the original 21-ship plan: actual personal `~/.claude
 **Templated (3, `jm-`/coupling stripped):** `commit` (renamed from `jm-commit`; scope examples generalized; toolchain step made stack-neutral; `disable-model-invocation: true` because the workflow performs a `git commit`), `devils-advocate` (renamed from `jm-devils-advocate`; depends on the `devils-advocate` agent shipped in slice 2, adopters install the assembled plugin so the cross-slice dependency is dev-time only), `interaction-qa` (OOM bundle ID example replaced; philosophy lookup switched from `~/.claude/docs/` to project-local `.claude/docs/` with rules fallback)
 
 **Don't ship (28):**
-- 14 personal `jm-*`: `jm-account`, `jm-catchup`, `jm-color-options`, `jm-email`, `jm-linear-promote-tbd`, `jm-meta-command`, `jm-meta-generate`, `jm-plugin-audit`, `jm-research`, `jm-research-claude`, `jm-retro`, `jm-spincraft`, `jm-voice`, `jm-watch-pr`
+- 14 personal `jm-*`: `jm-account`, `jm-catchup`, `jm-color-options`, `jm-email`, `jm-linear-promote-tbd`, `jm-meta-command`, `jm-meta-generate`, `jm-plugin-audit`, `jm-research`, `jm-research-claude`, `jm-remember-session`, `jm-spincraft`, `jm-voice`, `jm-watch-pr`
 - 1 personal: `me` (shipped via `dot-me` plugin)
 - 3 OneOnMe-specific: `oom-linear-promote-tbd`, `oom-teams`, `oom-visual-qa`
 - 3 home-lab menu-service: `menu-agent-auth`, `menu-agent-status`, `menu-import`

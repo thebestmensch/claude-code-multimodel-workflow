@@ -31,9 +31,7 @@ flowchart TD
     PR[/jm-pr: drive to green/]:::cmd
     CR[CodeRabbit<br/>external PR review]:::ext
     Decision{what next?}:::start
-    Precompact[/jm-precompact<br/>distill before /compact/]:::cmd
-    Wrap[/jm-wrap<br/>quick wrap, ticket deferreds/]:::cmd
-    Retro[/jm-retro<br/>auto-invoked/]:::autocmd
+    Remember[/jm-remember-session<br/>distill · memory · close-out/]:::cmd
     Memory([Memory write<br/>~/.me/memory/ + CLAUDE.md]):::terminus
     Compact[/compact<br/>built-in/]:::cmd
     EndNode([Session ends]):::terminus
@@ -51,9 +49,9 @@ flowchart TD
     PR --> CR
     CR -.iterate until green.-> PR
     PR --> Decision
-    Decision -- compact --> Precompact --> Retro
-    Decision -- done --> Wrap --> Retro
-    Retro --> Memory
+    Decision -- compact --> Remember
+    Decision -- done --> Remember
+    Remember --> Memory
     Memory --> Compact
     Memory --> EndNode
     Compact -.fresh capacity.-> Intake
@@ -138,9 +136,7 @@ Slash commands are the user-facing surface: what you type (`/visual-qa`), what C
 |---|---|---|
 | `/commit` | Conventional Commits message + verifies pre-commit reviews fired on the staged diff. Model can't auto-invoke this (`disable-model-invocation: true`) because it performs a real `git commit`. | After verification passes, before pushing. |
 | `/jm-pr` | Drives an open PR to green: iterates with CodeRabbit and other automated reviewers until comments are resolved, then merges. | Once you push and CR starts commenting. |
-| `/jm-wrap` | End-of-session cleanup. Runs retro if needed, handles trivial deferreds inline, tickets the non-trivial ones, leaves the repo clean. | At "done for the day." |
-| `/jm-precompact` | Pre-compaction retro. Distills lessons and commits memory *before* `/compact` so durable rules survive summarization. | When context is hot and you want to keep going. |
-| `/jm-retro` | Reflect on the session, fold durable lessons into standing instructions, surface what comes next. | Auto-invoked inside `/jm-wrap` and `/jm-precompact`; rarely typed directly. |
+| `/jm-remember-session` | Distil the session's lessons into standing instructions and push memory off-machine; when real loose ends are detected (uncommitted work, worktrees, deferreds), also close out the session. Mode-less — safe mid-session before `/compact` or at session end. | Before `/compact`, or at "done for the day." |
 | `/jm-linear-groom` | Bulk-groom Linear tickets: labels, statuses, scope reduction, agent-eligibility decisions. | Weekly or when the queue gets noisy. |
 | `/teams` | Orchestrate a multi-codebase feature with coordinated subagents sharing a written contract. `disable-model-invocation: true` because blast radius spans services. | Cross-service feature work. |
 | `/lateral` | Five lateral-thinking personas dispatched in parallel to reframe a stuck problem; main session ranks and presents. | When you've cycled a problem 2–3 times without progress. |
