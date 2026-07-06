@@ -248,32 +248,18 @@
   <text x="540" y="1622" class="lbl-muted" font-size="10">compact</text>
   <text x="860" y="1622" class="lbl-muted" font-size="10">done</text>
 
-  <!-- LEFT: /jm-precompact (compact path) -->
-  <rect x="380" y="1640" width="240" height="60" rx="8" class="node cmd"/>
-  <text x="500" y="1663" class="lbl"><tspan font-weight="600">/jm-precompact</tspan></text>
-  <text x="500" y="1680" class="lbl-sm">distill before /compact</text>
-  <path d="M620,1580 C540,1580 500,1620 500,1640" class="edge" marker-end="url(#arr)"/>
-
-  <!-- RIGHT: /jm-wrap (done path) -->
-  <rect x="780" y="1640" width="240" height="60" rx="8" class="node cmd"/>
-  <text x="900" y="1663" class="lbl"><tspan font-weight="600">/jm-wrap</tspan></text>
-  <text x="900" y="1680" class="lbl-sm">quick wrap, ticket deferreds</text>
-  <path d="M780,1580 C860,1580 900,1620 900,1640" class="edge" marker-end="url(#arr)"/>
-
-  <!-- CENTER cluster: /jm-retro (auto, both paths invoke) -->
-  <rect x="620" y="1730" width="160" height="44" rx="8" class="node autocmd"/>
-  <text x="700" y="1750" class="lbl"><tspan font-weight="600">/jm-retro</tspan></text>
-  <text x="700" y="1764" class="lbl-sm">auto-invoked</text>
-  <path d="M540,1700 C580,1730 620,1745 640,1750" class="edge-auto"/>
-  <path d="M860,1700 C820,1730 780,1745 760,1750" class="edge-auto"/>
-  <text x="572" y="1722" class="lbl-muted" font-size="10">auto</text>
-  <text x="828" y="1722" class="lbl-muted" font-size="10">auto</text>
+  <!-- /jm-remember-session (mode-less: both compact + done paths invoke the same command) -->
+  <rect x="560" y="1660" width="280" height="60" rx="8" class="node cmd"/>
+  <text x="700" y="1683" class="lbl"><tspan font-weight="600">/jm-remember-session</tspan></text>
+  <text x="700" y="1700" class="lbl-sm">distill · memory · close-out</text>
+  <path d="M620,1580 C600,1610 640,1640 665,1660" class="edge" marker-end="url(#arr)"/>
+  <path d="M780,1580 C800,1610 760,1640 735,1660" class="edge" marker-end="url(#arr)"/>
 
   <!-- Memory write outcome bubble (both paths reach this) -->
   <ellipse cx="700" cy="1820" rx="160" ry="26" class="node end"/>
   <text x="700" y="1820" class="lbl" font-weight="600">Memory write</text>
   <text x="700" y="1836" class="lbl-sm">~/.me/memory/ + CLAUDE.md</text>
-  <path d="M700,1774 V1794" class="edge-side" marker-end="url(#arr)"/>
+  <path d="M700,1720 V1794" class="edge-side" marker-end="url(#arr)"/>
 
   <!-- After memory: compact path → /compact built-in; done path → END terminal -->
   <rect x="380" y="1880" width="240" height="50" rx="8" class="node cmd"/>
@@ -293,7 +279,7 @@
 </svg>
 
   <footer>
-    Gates inline on spine: must clear forward. Red dashed = retry loop back to prior step. Side branches in dashed gray = sidecars (research, devils-advocate, implementer agents, UI QA, release commands). Gold dashed = iteration loops (CodeRabbit, cross-session memory). Memory write is a dashed outcome, not invoked, just what happens. /jm-retro is auto-invoked inside both /jm-precompact and /jm-wrap.
+    Gates inline on spine: must clear forward. Red dashed = retry loop back to prior step. Side branches in dashed gray = sidecars (research, devils-advocate, implementer agents, UI QA, release commands). Gold dashed = iteration loops (CodeRabbit, cross-session memory). Memory write is a dashed outcome, not invoked, just what happens. /jm-remember-session is mode-less: the same command distils lessons mid-session (before /compact) or at session end, closing out loose ends only when it detects them.
   </footer>
 
 </div>

@@ -4,7 +4,9 @@ All notable changes to `claude-code-multimodel-workflow` documented here. Format
 
 ## [Unreleased]
 
-(nothing yet)
+### Changed
+
+- **BREAKING: merged `/jm-retro` + `/jm-wrap` + `/jm-precompact` into one mode-less `/jm-remember-session`.** The three were the same memory writeback at three timing-collars; the fork only existed because retro's old § 7 "What's Next" block manufactured speculative deferreds mid-session. The merged command is mode-less: Part A (memory writeback) always runs and is safe before every `/compact`; Part B detects *real* state (git status / worktrees / background jobs) instead of inventing next-steps; Part C (session close-out) fires only when Part B found real residue, staying silent on a clean tree. Adopters who typed `/jm-retro`, `/jm-wrap`, or `/jm-precompact` should switch to `/jm-remember-session` (one command replaces all three). README workflow diagram + command table and `workflow.html` updated to match.
 
 ## [0.3.0] - 2026-05-29
 
