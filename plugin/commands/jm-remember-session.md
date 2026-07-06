@@ -121,7 +121,9 @@ Run, in the active project root (and any active worktree):
 
 ```bash
 git status --short                    # uncommitted work?
-git log --oneline @{upstream}..HEAD   # unpushed commits?
+git rev-parse --abbrev-ref @{upstream} >/dev/null 2>&1 \
+  && git log --oneline @{upstream}..HEAD \
+  || echo "[no upstream configured]"  # unpushed commits? (guard: skip on detached HEAD / no upstream)
 git stash list                        # forgotten stashes?
 git worktree list                     # active worktrees?
 ```
