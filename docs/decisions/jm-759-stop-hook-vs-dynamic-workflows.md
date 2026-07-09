@@ -108,17 +108,20 @@ These exist because the gate infers "what changed" from Edit|Write tracking + `g
 **Crucial:** none of these dissolve *because of* the Workflow tool. They dissolve because the reviewer gets a pinned diff. A workflow would achieve that only as a side effect of its agent computing the diff once — and it would *re-introduce* #3/#13 inside the agent's cwd. The cheaper, enforcement-preserving way to get the same win is to pin the diff in the existing dispatch path.
 
 ### Cluster B — file-filter policy (2 of 14). Orthogonal to topology.
+
 | # | Footgun | Note |
 |---|---|---|
 | 1 | Bash-mediated mutations invisible to Edit\|Write tracker | Already mitigated by the fire-time `git diff` augmenter; a pinned-diff model subsumes it. Not a topology question. |
 | 2 | User-facing copy in `*.md/*.json/…` filtered upstream | A *policy* choice (what's review-worthy), independent of hooks vs. workflows. Survives unless the filter is changed deliberately. |
 
 ### Cluster C — the external Codex CLI (1 of 14). Survives either way.
+
 | # | Footgun | Note |
 |---|---|---|
 | 7 | Hung Codex jobs, bail at ~5 min | The `codex-companion.mjs` process can hang regardless of what triggers it. A workflow reframes it as one failed `agent()` stage (returns null, filtered) — marginally nicer — but the CLI still hangs. Survives; the wrapper's hang-bail already handles it. |
 
 ### Cluster D — hook plumbing (3 of 14). Dissolve *only* by removing hooks — which we can't.
+
 | # | Footgun | Note |
 |---|---|---|
 | 10 | Stop-hook block cap (8 blocks → turn ends) | Exists *because* there's a Stop hook. Removing hooks removes it — but that sacrifices enforcement (unacceptable). |
