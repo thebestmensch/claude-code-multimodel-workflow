@@ -1,0 +1,101 @@
+# review-coverage — RECEIPTS. A record of who reviewed, never a gate.
+#
+# When every bot review is advisory and quotas can shed any of them, the
+# question "did anything actually review this PR?" needs a per-PR answer that
+# outlives chat scrollback. This posts a check run named `review-coverage` on
+# the PR head SHA:
+#   - at ready_for_review: snapshot of which reviewers are expected/engaged
+#   - at merge:            final receipt (who reviewed / who skipped + reason)
+#
+# Check runs over comments: SHA-attached, posted by the Actions app,
+# tamper-evident.
+#
+# Contract (do not weaken casually, do not strengthen at all):
+#   - NEVER gating. Conclusion is always `neutral`; the step is
+#     continue-on-error; the ruleset must never require this check.
+#   - Never rename to collide with `merge-gate`.
+#   - PR-level only — no cross-PR aggregation, no journaling system.
+#   - Receipts state ELIGIBILITY and best-effort evidence, never verified
+#     completion — a green bot status can mask a rate-limited no-op review,
+#     so the receipt names its evidence quality instead of asserting.
+name: Review Coverage
+
+on:
+  pull_request:
+    types: [ready_for_review, closed]
+
+permissions:
+  checks: write
+  pull-requests: read
+
+jobs:
+  receipt:
+    name: review-coverage-post
+    # ready_for_review always; closed only when actually merged.
+    if: >-
+      github.event.action == 'ready_for_review' ||
+      github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    # Belt over the step-level continue-on-error: even a runner-level failure
+    # must not surface as a red check (never-gating invariant).
+    continue-on-error: true
+    steps:
+      - name: Post review-coverage check run
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT_ACTION: ${{ github.event.action }}
+          MERGED: ${{ github.event.pull_request.merged }}
+        run: |
+          set +e  # receipts must never fail the PR; every probe degrades to "unknown"
+
+          # --- who actually reviewed (submitted PR reviews) -----------------
+          # --paginate applies --jq per page, so dedupe downstream, not in jq.
+          reviewers=$(gh api "repos/$REPO/pulls/$PR/reviews" --paginate \
+            --jq '.[].user.login' 2>/dev/null | sort -u | paste -sd ',' - | sed 's/,/, /g')
+          [ -n "$reviewers" ] || reviewers="none"
+
+          # --- per-surface engaged/skipped lines ----------------------------
+          # TODO(template): one probe per advisory review surface you run.
+          # Patterns that work (each degrades to "unknown", never errors):
+          #   - label-gated bot:  read the PR labels, report eligible/not
+          #   - mention-poked bot: grep issue comments for the poke marker
+          #   - Actions-run bot:  read its check run conclusion on this SHA
+          # Example (label-gated reviewer on a `high-risk` label):
+          labels=$(gh api "repos/$REPO/issues/$PR/labels" \
+            --jq '[.[].name] | join(",")' 2>/dev/null)
+          case ",$labels," in
+            *,high-risk,*) bot_review="eligible (high-risk label) — completion not verified" ;;
+            *)             bot_review="not eligible — no high-risk label" ;;
+          esac
+
+          if [ "$EVENT_ACTION" = "closed" ] && [ "$MERGED" = "true" ]; then
+            title="Final receipt at merge"
+          else
+            title="Snapshot at ready-for-review"
+          fi
+
+          # Built with printf so no YAML block indentation leaks into the
+          # markdown (leading spaces would render the table as a code block).
+          summary=$(printf '%s\n' \
+            "**$title** — PR #$PR, head \`$HEAD_SHA\`" \
+            "" \
+            "| surface | status |" \
+            "| --- | --- |" \
+            "| submitted reviews | $reviewers |" \
+            "| label-gated bot | $bot_review |" \
+            "" \
+            "Receipt only — never a gate.")
+
+          gh api "repos/$REPO/check-runs" -X POST \
+            -f name="review-coverage" \
+            -f head_sha="$HEAD_SHA" \
+            -f status="completed" \
+            -f conclusion="neutral" \
+            -f "output[title]=$title" \
+            -f "output[summary]=$summary" \
+            || echo "::notice::review-coverage receipt post failed (non-gating, ignored)"
+          exit 0

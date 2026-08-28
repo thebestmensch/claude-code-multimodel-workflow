@@ -1,0 +1,259 @@
+# auto-ready — the "inversion": instead of a human flipping a PR ready and
+# then waiting on CI, an agent-authored draft PR flips to ready-for-review
+# automatically once every Actions workflow for its head SHA has finished
+# green. The flip is what fires your tracker's "review me" transition, and
+# with staged CI it is also what triggers the full suite + real merge-gate
+# evaluation.
+#
+# =========================================================================
+# WHY `workflow_run` AND NOT `check_suite`
+# =========================================================================
+# GitHub's docs: "To prevent recursive workflows, [check_suite] does not
+# trigger workflows if the check suite was created by GitHub Actions." A
+# check_suite trigger is therefore deaf to exactly the CI completions it
+# wants to observe — measured: only third-party-app suites (if any complete
+# at all) ever woke such a workflow. `workflow_run` has no such suppression.
+#
+# NOTE: `workflow_run` workflows run from the DEFAULT BRANCH only. Changes
+# here take effect when merged — they cannot be exercised on the PR that
+# makes them.
+name: auto-ready-agent-pr
+
+on:
+  workflow_run:
+    # MUST list every workflow that runs on `pull_request` — and every
+    # `pull_request_target` workflow that registers a check run on the PR
+    # (agent-infra-guard), since those sit in the rollup this job evaluates
+    # too. `workflows:` is mandatory for this event, and a stale list fails
+    # SILENTLY in the worst direction: a workflow missing here never wakes
+    # this job, so if it is still running when the last listed workflow
+    # finishes, the rollup reads pending, defers to a "next event" that
+    # never arrives, and the PR sits in draft forever.
+    #
+    # These are workflow `name:` values, NOT filenames.
+    # TODO(template): list YOUR workflows; strongly consider a contract test
+    # that derives this set from .github/workflows/ so drift lands as a red
+    # test rather than a stranded PR (docs/setup.md).
+    workflows:
+      - Agent infra guard
+      # Fast lane runs precisely on draft pushes — the SHA state this job
+      # evaluates. Omitting it strands drafts: every other workflow completes
+      # fast while the fast lane is still running, the rollup reads pending,
+      # and the fast lane's completion never wakes this job.
+      - Fast lane
+      # Merge Gate completes only after every suite it expects has succeeded
+      # for the head SHA, so its completion is the flip's final wakeup — by
+      # construction the last one to arrive when a PR is actually green.
+      # (With staged CI's draft arm, its draft-era run completes as a fast
+      # deliberate failure — see the verdict exclusion below.)
+      - Merge Gate
+      - Review Coverage
+      - Security scan
+      - Unit tests
+    types: [completed]
+
+# One evaluation per head SHA. cancel-in-progress means that when several
+# workflows for one SHA finish together only the LAST evaluation survives —
+# the one we want, since the later it runs the more sibling check runs have
+# registered.
+concurrency:
+  # Keyed by SHA AND branch: different branches can point at the same commit,
+  # and a SHA-only group would let a non-agent branch's completion cancel the
+  # in-flight agent evaluation, then no-op on its own branch filter — leaving
+  # the draft with no successor event. run_id is the unique fallback when the
+  # event carries no head_branch.
+  group: >-
+    flip-ready-${{ github.event.workflow_run.head_sha }}-${{
+    github.event.workflow_run.head_branch || github.run_id }}
+  cancel-in-progress: true
+
+# Least-privilege: nothing here consumes the default GITHUB_TOKEN (it cannot
+# call markPullRequestReadyForReview anyway, and events it triggers would not
+# start downstream workflows). Every gh call runs on a PAT or GitHub App
+# token with `contents: write` + `pull-requests: write`.
+permissions: {}
+
+jobs:
+  flip-ready:
+    # `workflow_run.event` is the event that triggered the OBSERVED run.
+    # Gating on the two PR-shaped events drops manual workflow_dispatch runs
+    # (no PR behind them) — and `pull_request_target` must be accepted, or a
+    # draft whose infra-guard finished last strands. This job cannot
+    # re-trigger itself: its own runs carry `event: workflow_run`.
+    if: github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'pull_request_target'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Mark green agent draft PRs ready for review
+        env:
+          # TODO(template): a PAT (classic: repo scope) or GitHub App token.
+          GH_TOKEN: ${{ secrets.AGENT_GITHUB_TOKEN }}
+          # TODO(template): STAGED CI ONLY — set to your gate's workflow name
+          # (e.g. "Merge Gate"). With the draft fail-closed arm, the gate's
+          # draft-era run FAILS on purpose; left in the verdict, no draft
+          # could ever flip. Excluding it here is safe because the flip is
+          # what triggers the real gate evaluation, and the ruleset still
+          # requires a merge-gate SUCCESS before anything merges. Leave empty
+          # without staged CI.
+          GATE_WORKFLOW_EXCLUDE: ""
+          REPO: ${{ github.repository }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          # This workflow's own check run is IN_PROGRESS while it evaluates
+          # the rollup, so it must exclude itself or "all complete" can never
+          # become true.
+          SELF_WORKFLOW: ${{ github.workflow }}
+        run: |
+          set -o errexit -o nounset -o pipefail
+
+          # Fail LOUDLY on auth. Measured failure mode: an expired token made
+          # every gh call 401, and guarding each with `|| echo skipping` let
+          # the job exit 0 green — the flip was dead for days with nothing
+          # anywhere to show it. A dead credential gets a red run.
+          if ! gh auth status >/dev/null 2>&1; then
+            echo "::error::AGENT_GITHUB_TOKEN is missing, expired, or lacks scope."
+            exit 1
+          fi
+
+          # Cheap branch-shape filter before any API call.
+          # TODO(template): your agent branch pattern. If branches encode a
+          # ticket id, match it exactly — the ref is then a tamper-evident
+          # binding to the ticket that downstream automation can trust.
+          if [[ ! "$HEAD_BRANCH" =~ ^agent/ ]]; then
+            echo "Branch $HEAD_BRANCH is not an agent branch — nothing to do."
+            exit 0
+          fi
+
+          pr_json=$(gh pr list --repo "$REPO" --head "$HEAD_BRANCH" --state open \
+                      --json number,isDraft,baseRefName,isCrossRepository,headRefOid)
+
+          pr=$(echo "$pr_json" | jq -r '.[0].number // empty')
+          if [ -z "$pr" ]; then
+            echo "No open PR for branch $HEAD_BRANCH — nothing to do."
+            exit 0
+          fi
+
+          is_draft=$(echo "$pr_json" | jq -r '.[0].isDraft')
+          base_ref=$(echo "$pr_json" | jq -r '.[0].baseRefName')
+          is_fork=$(echo "$pr_json" | jq -r '.[0].isCrossRepository')
+          pr_head=$(echo "$pr_json" | jq -r '.[0].headRefOid')
+
+          # A fork author could otherwise name their branch agent/... and
+          # ride green CI into a token-backed mutation.
+          if [ "$is_fork" != "false" ]; then
+            echo "PR #$pr — cross-repository (fork) PR, refusing."
+            exit 0
+          fi
+
+          # TODO(template): your gated integration branch in place of main.
+          case "$is_draft:$base_ref" in
+            true:main) ;;
+            *)
+              echo "PR #$pr ($HEAD_BRANCH -> $base_ref, draft=$is_draft) does not qualify — skipping."
+              exit 0
+              ;;
+          esac
+
+          # The observed run may be for a commit since superseded. Flipping
+          # ready on a stale green would attest to CI that never ran against
+          # the current head.
+          if [ "$pr_head" != "$HEAD_SHA" ]; then
+            echo "PR #$pr — head moved ($HEAD_SHA -> $pr_head); a newer run will re-evaluate."
+            exit 0
+          fi
+
+          # Emits "<verdict> <run-count>". Scoped to CheckRun entries carrying
+          # a workflowName, which excludes: third-party StatusContexts that
+          # never complete (they would wedge "all complete" forever), and this
+          # workflow's own IN_PROGRESS run. Be clear about the trade: "green"
+          # asserts only that THIS REPO'S ACTIONS WORKFLOWS passed — a failing
+          # or never-finishing third-party app check does not block the flip.
+          # If a third-party check should gate, add an explicit allowlist; do
+          # not relax the filter. $gate (GATE_WORKFLOW_EXCLUDE, staged CI
+          # only) drops the gate's deliberate draft-era FAILURE from the
+          # verdict — "not evaluated yet", never "CI is failing"; empty means
+          # no extra exclusion (the workflowName != "" filter already ran).
+          cat > "$RUNNER_TEMP/verdict.jq" <<'JQ'
+          [ (.statusCheckRollup // [])[]
+            | select(.__typename == "CheckRun")
+            | select(.workflowName != null and .workflowName != "")
+            | select(.workflowName != $self)
+            | select(.workflowName != $gate)
+          ] as $runs
+          | ( if   ($runs | length) == 0                then "none"
+              elif ($runs | any(.status != "COMPLETED")) then "pending"
+              elif ($runs | all(.conclusion | IN("SUCCESS", "SKIPPED", "NEUTRAL"))) then "green"
+              else "failing"
+              end ) as $v
+          | "\($v) \($runs | length)"
+          JQ
+
+          evaluate() {
+            gh pr view "$1" --repo "$REPO" --json statusCheckRollup \
+              | jq -r --arg self "$SELF_WORKFLOW" --arg gate "$GATE_WORKFLOW_EXCLUDE" \
+                  -f "$RUNNER_TEMP/verdict.jq"
+          }
+
+          # Standalone assignment, NOT `read <<< "$(...)"`: a herestring
+          # swallows the substitution's exit status, so a failed gh/jq would
+          # read as verdict "" and exit 0 — the silent skip this job bans.
+          if ! rollup=$(evaluate "$pr"); then
+            echo "::error::PR #$pr — rollup evaluation failed."
+            exit 1
+          fi
+          read -r verdict count <<< "$rollup"
+          if [ "$verdict" != "green" ]; then
+            echo "PR #$pr — CI verdict '$verdict' ($count checks), not flipping ready."
+            exit 0
+          fi
+
+          # A sibling workflow that has not REGISTERED its check run yet is
+          # absent from the set rather than reading as pending, so a green
+          # read taken the instant one workflow finishes can be premature.
+          # Re-read after a settle margin and require the check count not to
+          # have grown. This narrows the race, it does not prove it closed —
+          # a check slow to propagate past the margin leaves no successor
+          # event; `gh pr ready` is the manual escape.
+          sleep 30
+          if ! rollup2=$(evaluate "$pr"); then
+            echo "::error::PR #$pr — settle re-read failed."
+            exit 1
+          fi
+          read -r verdict2 count2 <<< "$rollup2"
+
+          if [ "$verdict2" != "green" ]; then
+            echo "PR #$pr — settled to '$verdict2' on re-read, not flipping ready."
+            exit 0
+          fi
+          if [ "$count2" -gt "$count" ]; then
+            echo "PR #$pr — $((count2 - count)) check(s) registered late; deferring to the next workflow_run event."
+            exit 0
+          fi
+
+          # CI success and review approval are independent surfaces: a bot's
+          # commit STATUS can be SUCCESS while its actual review requested
+          # changes. Re-read the mutable PR authority immediately before the
+          # write — current head, draft state, derived review decision, and
+          # review history in one response. COMMENTED reviews do not supersede
+          # an earlier approval or change request.
+          if ! final_pr=$(gh pr view "$pr" --repo "$REPO" \
+              --json headRefOid,isDraft,reviewDecision,reviews); then
+            echo "::error::PR #$pr — final PR authority read failed."
+            exit 1
+          fi
+          final_head=$(echo "$final_pr" | jq -r '.headRefOid')
+          final_draft=$(echo "$final_pr" | jq -r '.isDraft')
+          review_decision=$(echo "$final_pr" | jq -r '.reviewDecision // ""')
+          latest_change_requests=$(echo "$final_pr" \
+              | jq '[.reviews[]? | select(.state == "APPROVED" or .state == "CHANGES_REQUESTED")] | sort_by(.submittedAt) | reduce .[] as $review ({}; .[$review.author.login] = $review.state) | [.[] | select(. == "CHANGES_REQUESTED")] | length')
+          if [ "$final_head" != "$HEAD_SHA" ] || [ "$final_draft" != "true" ]; then
+            echo "PR #$pr — final authority moved (head=$final_head, draft=$final_draft); refusing."
+            exit 0
+          fi
+          if [ "$review_decision" = "CHANGES_REQUESTED" ] || [ "$latest_change_requests" -gt 0 ]; then
+            echo "PR #$pr — review decision requests changes; leaving draft despite green CI."
+            exit 0
+          fi
+
+          echo "PR #$pr ($HEAD_BRANCH) is a green agent draft with no requested changes ($count2 checks) — marking ready."
+          gh pr ready "$pr" --repo "$REPO"

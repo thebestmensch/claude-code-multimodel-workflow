@@ -1,0 +1,287 @@
+# merge-gate — the suite-attestation required check.
+#
+# Why this exists: every heavy suite in a real repo is path-filtered, and a
+# required check that never fires blocks merge forever (the required-checks
+# footgun). This workflow has NO path filter, so its check materializes on
+# every PR — and it goes green only when every suite this PR's diff requires
+# has succeeded on the head SHA. The branch ruleset requires this check bound
+# to the GitHub Actions app; all bot reviews stay advisory.
+#
+# Authority model (fail-closed by construction): the gate's OWN changed-path
+# detection decides which suites are expected — the patterns in wants() below
+# mirror each suite workflow's `paths:` filter. An expected suite must produce
+# a successful run for this head SHA; absence at the deadline FAILS the gate
+# naming the suite, and Actions API errors retry then FAIL. A skip is only
+# ever derived from the diff not matching a suite's paths — never from missing
+# API data. The mirrored patterns can drift from the suites' own filters.
+# PATTERN-WIDTH drift is safe by construction — bash case globs are broader
+# than GitHub path globs (* crosses /), so a matching arm over-expects (a
+# false red that names the suite), never under. But a MISSING arm is not: a
+# suite that widens its paths, or a new suite never added to SUITES, silently
+# under-attests. The pin tests in docs/setup.md (##1–2: every pull_request
+# workflow gated-or-documented, every SUITES entry has an arm) are the
+# mechanical guard for that direction — treat them as part of this workflow,
+# not optional extras.
+#
+# Naming contract: no other workflow may report a job under the name
+# "merge-gate" — a fast-lane or sibling check reusing the name would satisfy
+# the ruleset without attesting anything.
+#
+# TODO(template) summary — every per-repo parameter, in order of appearance:
+#   1. Gated base branches (on.pull_request.branches)
+#   2. Draft fail-closed arm — KEEP if you run staged CI, DELETE otherwise
+#   3. Promotion arm — KEEP for staged bases, DELETE for a single branch;
+#      if kept, its "production"/"staging" literals must match your branches
+#   4. SUITES list + wants() path map (mirror your suite workflows' paths)
+#   5. Deadline (38 min fits a ~27-min slowest suite; size for your ceiling)
+name: Merge Gate
+
+on:
+  pull_request:
+    # TODO(template): your gated base branch(es). Single-branch: [main].
+    # Staged bases: [staging, production].
+    branches: [main]
+    # ready_for_review matters only with the draft arm: the publish flip must
+    # start a real gate run to replace the draft-time deliberate failure.
+    # TODO(template): if you DELETE the draft arm, this types line can go too
+    # (the default types are then sufficient).
+    types: [opened, reopened, synchronize, ready_for_review]
+
+# pull-requests: read is load-bearing — GET /pulls/{n}/files needs it, and a
+# permissions block zeroes every scope it doesn't name (measured: first runs
+# died 403 without it).
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: merge-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  merge-gate:
+    name: merge-gate
+    # NO job-level draft `if:` even when using the draft arm — the job must
+    # RUN on drafts so its conclusion is `failure`, never `skipped`: both
+    # `skipped` and `neutral` SATISFY a required check and outlive draft state
+    # on the same SHA (measured: a ~90s window between publish-flip and the
+    # fresh run registering read as mergeable off the draft-era skip).
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      REPO: ${{ github.repository }}
+    steps:
+      # ----------------------------------------------------------------------
+      # TODO(template): DRAFT FAIL-CLOSED ARM — keep with staged CI (drafts
+      # run only the fast lane, so the gate cannot attest anything yet);
+      # DELETE this step if drafts run the same suites as ready PRs (then a
+      # draft-red arm would strand agent drafts your auto-ready flip watches).
+      # ----------------------------------------------------------------------
+      - name: Draft fail-closed
+        if: github.event.pull_request.draft == true
+        run: |
+          echo "❌ merge-gate: DELIBERATE red — this PR is a draft, and the gate only"
+          echo "   evaluates at the publish flip. A skipped or neutral conclusion would"
+          echo "   satisfy the branch ruleset and outlive draft state on this SHA, so"
+          echo "   failure is the only conclusion that keeps the required check"
+          echo "   unsatisfied until the real ready_for_review run supersedes it."
+          echo "   Nothing is wrong with this PR's code; publish it to run the gate."
+          exit 1
+
+      - name: Check out (suite-list drift guard)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Gate
+        run: |
+          set -o errexit -o pipefail
+
+          # api_json <path> — gh api with retries; hard-fails the gate on
+          # persistent API errors. An outage must read as red, never as skip.
+          api_json() {
+            local attempt out err=""
+            for attempt in 1 2 3; do
+              if out=$(gh api "$1" 2>/tmp/merge-gate-api-err); then
+                echo "$out"
+                return 0
+              fi
+              err=$(cat /tmp/merge-gate-api-err 2>/dev/null || true)
+              [ "$attempt" -lt 3 ] && sleep $(( attempt * 10 ))
+            done
+            echo "❌ merge-gate: API call failed for $1 — failing closed. Last error: ${err:-<no stderr>}" >&2
+            exit 1
+          }
+
+          # ----------------------------------------------------------------
+          # TODO(template): PROMOTION ARM — keep for staged bases (PRs into
+          # the promotion branch are a SHAPE check: only the integration
+          # branch itself may promote; suites don't re-run — their verdicts
+          # were required to land the content). DELETE for a single branch.
+          # If kept: the "production" and "staging" literals below must match
+          # YOUR branch names (and the branches: list above).
+          # ----------------------------------------------------------------
+          if [ "$BASE_REF" = "production" ]; then
+            if [ "$HEAD_REPO" = "$REPO" ] && [ "$HEAD_REF" = "staging" ]; then
+              echo "✅ Promotion-shaped PR (staging → production, same repo). Content was gated into staging; promotion itself is a human deploy decision."
+              exit 0
+            fi
+            echo "❌ merge-gate: PRs to production must promote the staging branch itself"
+            echo "   (head=$HEAD_REPO:$HEAD_REF). Merge to staging first."
+            exit 1
+          fi
+
+          # ---- Changed files (paginated past 100) ---------------------------
+          # A rename reports the DESTINATION in .filename and the source in
+          # .previous_filename — collecting only .filename lets a PR rename a
+          # gated file out of its matched path unseen, so both sides of every
+          # rename go into CHANGED. Pagination counts API items (jq length),
+          # never output lines, since renames emit two lines per item.
+          NL=$'\n'
+          CHANGED=""
+          PAGE=1
+          TOTAL=0
+          while :; do
+            RESP=$(api_json "repos/$REPO/pulls/$PR_NUMBER/files?per_page=100&page=$PAGE")
+            BATCH=$(echo "$RESP" | jq -r '.[] | .filename, (.previous_filename // empty)')
+            COUNT=$(echo "$RESP" | jq 'length')
+            TOTAL=$(( TOTAL + COUNT ))
+            if [ -n "$BATCH" ]; then
+              CHANGED="${CHANGED:+$CHANGED$NL}$BATCH"
+            fi
+            [ "$COUNT" -lt 100 ] && break
+            PAGE=$(( PAGE + 1 ))
+          done
+          # The files endpoint silently truncates at 3000 entries (page 31 is
+          # just []), so past the cap the suite map would run on an incomplete
+          # set. An unverifiable diff fails closed.
+          if [ "$TOTAL" -ge 3000 ]; then
+            echo "❌ merge-gate: PR lists $TOTAL files — at the API's 3000-file truncation cap, the full diff cannot be verified. Split the PR."
+            exit 1
+          fi
+
+          # ---- Which suites does THIS diff require? -------------------------
+          # TODO(template): one case arm per suite workflow, mirroring that
+          # workflow's `paths:` filter. An UNFILTERED suite (runs on every PR)
+          # gets a bare `return 0` arm — see security-scan.yml below. Each
+          # suite's own workflow file self-reference belongs in its arm so a
+          # PR editing the suite also runs it.
+          wants() {
+            local f
+            while IFS= read -r f; do
+              case "$1" in
+                unit-tests.yml)
+                  case "$f" in
+                    src/*|tests/*|.github/workflows/unit-tests.yml) return 0 ;;
+                  esac ;;
+                security-scan.yml)
+                  return 0 ;;
+              esac
+            done <<< "$CHANGED"
+            return 1
+          }
+
+          # TODO(template): every pull_request-triggered suite that should
+          # gate merges. Deliberately absent: post-merge deploy workflows,
+          # scheduled jobs, comment-triggered automation, the auto-ready
+          # flip, status-sync glue, and this workflow itself.
+          SUITES="unit-tests.yml security-scan.yml"
+
+          EXPECTED=""
+          for wf in $SUITES; do
+            # Drift guard: a listed workflow missing from the tree means this
+            # gate is stale — fail loudly rather than mis-mapping.
+            if [ ! -f ".github/workflows/$wf" ]; then
+              echo "❌ merge-gate: .github/workflows/$wf not found at this ref — update merge-gate.yml."
+              exit 1
+            fi
+            if wants "$wf"; then
+              EXPECTED="$EXPECTED $wf"
+              echo "expected: $wf"
+            else
+              echo "not required by this diff: $wf"
+            fi
+          done
+
+          if [ -z "$EXPECTED" ]; then
+            echo "✅ No suites required by this diff — gate passes."
+            exit 0
+          fi
+
+          # HEAD_REF is attacker-chosen: & = % # ; are all LEGAL in git ref
+          # names, so splicing it raw into a query string would let a crafted
+          # branch name (e.g. "x&head_sha=<old-green-sha>") inject extra query
+          # keys into the very lookup the gate's attestation rests on.
+          # Percent-encode it once; HEAD_SHA comes from the event payload and
+          # is hex-only.
+          HEAD_REF_ENC=$(jq -rn --arg s "$HEAD_REF" '$s | @uri')
+
+          runs_for() {
+            # Runs are selected by head SHA AND head branch. head_sha alone
+            # borrows runs across PRs: two branches can point at the same
+            # commit, and a suite run fired by the OTHER branch's PR (possibly
+            # a different base, so a different merge preview) would satisfy
+            # this one. The `branch` filter (run.head_branch — reliable,
+            # unlike a run's often-empty pull_requests[] association) closes
+            # that at this layer; a same-SHA-other-branch run then reads
+            # MISSING and the deadline fails closed. GitHub's OWN check-run
+            # semantics stay SHA-scoped regardless (README Known limitations).
+            #
+            # With staged CI, a draft-era run of an expected suite concludes
+            # `skipped` — that is "not evaluated", never a pass and never a
+            # failure. Dropping those runs makes the suite read MISSING or
+            # pending until its real ready-flip run registers: exactly the
+            # fail-closed reading the post-flip window needs. (Harmless
+            # without staged CI — suites then never conclude skipped.)
+            api_json "repos/$REPO/actions/workflows/$1/runs?head_sha=$HEAD_SHA&branch=$HEAD_REF_ENC&event=pull_request&per_page=10" \
+              | jq -c '[.workflow_runs[] | select(.conclusion != "skipped") | {status, conclusion}]'
+          }
+
+          # Poll until every expected suite's newest run for this SHA has
+          # SUCCEEDED. A suite with no run at the deadline is a FAILURE (its
+          # trigger should have fired off the same pull_request event).
+          # TODO(template): size the deadline for your slowest suite's healthy
+          # ceiling plus headroom — not its pathological tail. A passing suite
+          # that finishes past the deadline turns the gate red in the safe
+          # direction and recovers with a gate re-run.
+          DEADLINE=$(( $(date +%s) + 38*60 ))
+          while :; do
+            PENDING=""
+            MISSING=""
+            FAILED=""
+            for wf in $EXPECTED; do
+              RUNS=$(runs_for "$wf")
+              if [ "$RUNS" = "[]" ]; then
+                MISSING="$MISSING $wf"
+                continue
+              fi
+              NEWEST=$(echo "$RUNS" | jq -r '.[0] | "\(.status)/\(.conclusion)"')
+              case "$NEWEST" in
+                completed/success) ;;
+                completed/*) FAILED="$FAILED $wf($NEWEST)" ;;
+                *) PENDING="$PENDING $wf" ;;
+              esac
+            done
+            if [ -n "$FAILED" ]; then
+              echo "❌ merge-gate: suite(s) did not succeed:$FAILED"
+              exit 1
+            fi
+            if [ -z "$PENDING" ] && [ -z "$MISSING" ]; then
+              echo "✅ merge-gate: all expected suites succeeded:$EXPECTED"
+              exit 0
+            fi
+            if [ "$(date +%s)" -ge "$DEADLINE" ]; then
+              [ -n "$MISSING" ] && echo "❌ merge-gate: expected suite(s) never produced a run for $HEAD_SHA:$MISSING"
+              [ -n "$PENDING" ] && echo "❌ merge-gate: timed out waiting for:$PENDING"
+              exit 1
+            fi
+            echo "waiting — pending:$PENDING missing:$MISSING"
+            sleep 30
+          done

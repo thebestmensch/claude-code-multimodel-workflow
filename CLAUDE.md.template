@@ -1,0 +1,30 @@
+# How work merges here (workflow v2)
+
+<!-- TODO(template): drop this section into the consuming repo's CLAUDE.md
+     and/or AGENTS.md, filled in with that repo's actual values. Write it at
+     cutover, from the live configuration — never in advance. -->
+
+Merges into `<BRANCH>` are governed server-side by the branch ruleset
+(`.github/rulesets/<file>.json` — the JSON is the source of truth; the live
+ruleset is applied from it, and policy changes are PRs to that file).
+
+- **Two things gate a merge, nothing else:**
+  1. `merge-gate` — green only when every CI suite this PR's diff requires
+     has succeeded on the head SHA. No path filter; it runs on every PR.
+  2. `<agent-infra-guard | code-owner review>` — <agent-pattern> branches
+     cannot touch protected infra surfaces (<list them>); those changes land
+     from a human branch.
+- **Required approvals: 0.** CI green = mergeable. Every bot review
+  (<list your advisory reviewers>) is advisory — address findings on merit,
+  but no bot can block a merge, and none should be waited on when
+  rate-limited (skipped-and-noted, never waited-on).
+- **No direct pushes to `<BRANCH>`**, no force-pushes, no branch deletion —
+  admins included. There are no bypass actors.
+- **Agent draft PRs flip ready automatically** when every workflow for the
+  head SHA is green and no reviewer has requested changes
+  (auto-ready workflow). <If staged CI: drafts run the fast lane only; the
+  full suite and the real merge-gate evaluation fire at the flip.>
+- **Break-glass** (gate wedged by something outside the diff): disable the
+  ruleset → fix → re-enable → write it up. Runbook: <path>. Never merge past
+  a red gate by editing the required-check list.
+- **Dispatch convention:** at most 2–3 agent PRs in flight.

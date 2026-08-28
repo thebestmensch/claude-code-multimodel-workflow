@@ -1,0 +1,131 @@
+# agent-infra-guard — the second required status check for SINGLE-ACCOUNT
+# repos, where native code-owner review is unusable (every PR is authored by
+# the same account, and GitHub forbids authors approving their own PRs —
+# require_code_owner_review would hard-block every infra PR forever). Org
+# repos with real reviewers should use CODEOWNERS + require_code_owner_review
+# instead and skip this workflow entirely (docs/knobs.md).
+#
+# Why this is a SEPARATE workflow, on pull_request_target: a pull_request
+# workflow executes the HEAD's copy of itself, so a guard living inside
+# merge-gate.yml can be neutered by the very PR it polices (an agent PR edits
+# the gate to `exit 0`, the required check goes green, it merges).
+# pull_request_target runs the BASE ref's copy, which a PR cannot edit, and
+# the ruleset requires this check server-side — so the guard holds even
+# against a PR that rewrites every workflow in its own tree.
+#
+# pull_request_target safety: this job NEVER checks out or executes PR code —
+# no actions/checkout at all. It only reads the PR's changed-file list via the
+# REST API and string-matches paths. Keep it that way; adding a checkout of
+# the head ref here would hand PR code the elevated base-context token.
+#
+# What it enforces: agent-branch heads may not touch the surfaces that decide
+# what merges and what deploys. Be honest about what that is: branch naming
+# is convention, not authentication, so this guard narrows the ACCIDENT
+# surface and makes violations loud — it is NOT a security boundary against
+# an adversarial agent, which can simply name its branch like a human's
+# (README "Known limitations"). Closing that residual needs a separate agent
+# identity (a non-admin GitHub App, letting the guard key on PR author), not
+# a smarter branch pattern.
+#
+# Non-agent branches pass trivially, so the required check materializes on
+# every PR (the required-checks footgun needs every required check to always
+# report).
+name: Agent infra guard
+
+on:
+  pull_request_target:
+    # TODO(template): same gated base branch(es) as merge-gate.yml.
+    branches: [main]
+
+permissions:
+  pull-requests: read
+
+concurrency:
+  group: agent-infra-guard-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  agent-infra-guard:
+    name: agent-infra-guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Guard
+        run: |
+          set -o errexit -o pipefail
+
+          # TODO(template): your agent branch prefix(es).
+          case "$HEAD_REF" in
+            agent/*) ;;
+            *)
+              echo "✅ agent-infra-guard: head '$HEAD_REF' is not an agent branch — nothing to enforce."
+              exit 0
+              ;;
+          esac
+
+          # api_json <path> — retries then fails closed, same shape as
+          # merge-gate.yml: an API outage must read as red, never as pass.
+          api_json() {
+            local attempt out err=""
+            for attempt in 1 2 3; do
+              if out=$(gh api "$1" 2>/tmp/guard-api-err); then
+                echo "$out"
+                return 0
+              fi
+              err=$(cat /tmp/guard-api-err 2>/dev/null || true)
+              [ "$attempt" -lt 3 ] && sleep $(( attempt * 10 ))
+            done
+            echo "❌ agent-infra-guard: API call failed for $1 — failing closed. Last error: ${err:-<no stderr>}" >&2
+            exit 1
+          }
+
+          # Both sides of a rename go into the set — .previous_filename is how
+          # a protected file gets renamed OUT of its protected path.
+          NL=$'\n'
+          CHANGED=""
+          PAGE=1
+          TOTAL=0
+          while :; do
+            RESP=$(api_json "repos/$REPO/pulls/$PR_NUMBER/files?per_page=100&page=$PAGE")
+            BATCH=$(echo "$RESP" | jq -r '.[] | .filename, (.previous_filename // empty)')
+            COUNT=$(echo "$RESP" | jq 'length')
+            TOTAL=$(( TOTAL + COUNT ))
+            if [ -n "$BATCH" ]; then
+              CHANGED="${CHANGED:+$CHANGED$NL}$BATCH"
+            fi
+            [ "$COUNT" -lt 100 ] && break
+            PAGE=$(( PAGE + 1 ))
+          done
+          # The files endpoint silently truncates at 3000 entries (page 31 is
+          # just []), so a padded PR could hide a protected path past the cap.
+          # An unverifiable diff fails closed.
+          if [ "$TOTAL" -ge 3000 ]; then
+            echo "❌ agent-infra-guard: PR lists $TOTAL files — at the API's 3000-file truncation cap, the full diff cannot be verified. Split the PR."
+            exit 1
+          fi
+
+          # TODO(template): your protected surfaces — the repo's equivalents
+          # of "what decides what merges and what deploys": .github/**, the
+          # task runner (justfile / Makefile), deploy config (Procfile,
+          # wrangler.toml, compose files), sync maps. Keep this alternation in
+          # sync with your CODEOWNERS documentation copy — pin the pairing
+          # with a test if you keep both.
+          VIOLATIONS=""
+          while IFS= read -r f; do
+            case "$f" in
+              .github/*|justfile)
+                VIOLATIONS="$VIOLATIONS $f" ;;
+            esac
+          done <<< "$CHANGED"
+
+          if [ -n "$VIOLATIONS" ]; then
+            echo "❌ agent-infra-guard: agent branch '$HEAD_REF' touches protected infra surfaces:$VIOLATIONS"
+            echo "   Re-land these changes from a human branch."
+            exit 1
+          fi
+          echo "✅ agent-infra-guard: no protected surfaces in this diff."

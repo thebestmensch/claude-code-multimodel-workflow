@@ -1,0 +1,40 @@
+{
+  "_template": "Single deploy branch, single-account topology. The second required check is the agent-infra-guard workflow (code-owner review is unusable when every PR author is the same account — authors cannot approve their own PRs). Remove this _template key and every _todo key before applying; GitHub's API rejects unknown fields.",
+  "_todo": "Replace <BRANCH> with your deploy branch (e.g. main). Job names in the two workflows must match the check contexts below exactly — a rename orphans the requirement and nothing can merge.",
+  "name": "<BRANCH>-merge-gate",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/<BRANCH>"],
+      "exclude": []
+    }
+  },
+  "bypass_actors": [],
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" },
+    {
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": 0,
+        "require_code_owner_review": false,
+        "dismiss_stale_reviews_on_push": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": false,
+        "allowed_merge_methods": ["merge", "squash", "rebase"]
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": false,
+        "do_not_enforce_on_create": true,
+        "required_status_checks": [
+          { "context": "merge-gate", "integration_id": 15368 },
+          { "context": "agent-infra-guard", "integration_id": 15368 }
+        ]
+      }
+    }
+  ]
+}

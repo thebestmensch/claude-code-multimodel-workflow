@@ -1,0 +1,70 @@
+# fast-lane — the staged-CI draft lane. Drafts run cheap checks on every push
+# (lint, typecheck, scoped tests — minutes); the FULL suite runs once, at the
+# publish flip, together with the real merge-gate evaluation. Sequencing does
+# not weaken the gate: the required check must still pass on the final SHA at
+# merge. Skip this workflow entirely if your suites are cheap enough to run
+# the same on drafts and ready PRs (then also delete merge-gate's draft arm).
+#
+# Guardrails that make staging safe:
+#   - Fast-lane jobs must NEVER report under the required check's name
+#     ("merge-gate") — a name collision would satisfy the ruleset without
+#     attesting anything.
+#   - The full suite gates drafts OUT at the JOB level (`if:`), not the
+#     workflow level: the run still completes, so auto-ready's workflow_run
+#     wakeups fire exactly as before. The run's conclusion is `skipped` ONLY
+#     when EVERY job in it skips — one job that runs on drafts (a matrix leg,
+#     an unguarded setup job) flips the draft-era run to `success`, which
+#     merge-gate's runs_for() would then treat as a real verdict. Put the
+#     draft guard on EVERY job of the full-suite workflow.
+#   - `cancel-in-progress` so stale runs die on push.
+name: Fast lane
+
+on:
+  pull_request:
+    # TODO(template): your gated base branch(es).
+    branches: [main]
+    # TODO(template): optionally add a paths: filter scoped to what the fast
+    # checks actually exercise. The fast lane is advisory, so a path filter
+    # here has none of the required-check footgun.
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fast-lane-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fast-lane:
+    # Drafts only — ready PRs get the full suite instead. Job-level so the
+    # run completes either way (see header).
+    if: github.event.pull_request.draft == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      # TODO(template): your cheap checks — lint, typecheck, tests scoped to
+      # the diff. Keep the whole job under a few minutes; anything slower
+      # belongs in the full suite.
+      - name: Lint
+        run: echo "TODO(template) — ruff check / eslint / golangci-lint ..."
+      - name: Scoped tests
+        run: echo "TODO(template) — test runner scoped to changed paths"
+
+# The FULL suite's workflow gets the mirror-image condition on EVERY job —
+# not just one (see the header: a single unguarded job makes the draft-era
+# run conclude `success` instead of `skipped`, and merge-gate would read it
+# as a real verdict):
+#
+#   jobs:
+#     setup:
+#       if: github.event.pull_request.draft == false
+#       ...
+#     full-suite:
+#       if: github.event.pull_request.draft == false
+#       ...
+#
+# and its `on.pull_request.types` must include ready_for_review so the flip
+# starts it.
