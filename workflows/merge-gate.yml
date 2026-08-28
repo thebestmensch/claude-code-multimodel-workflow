@@ -173,6 +173,17 @@ jobs:
           # gets a bare `return 0` arm — see security-scan.yml below. Each
           # suite's own workflow file self-reference belongs in its arm so a
           # PR editing the suite also runs it.
+          #
+          # Mirror JOB-LEVEL guards too, not just paths: a suite whose only
+          # job carries an actor/condition `if:` (e.g. `github.actor !=
+          # 'dependabot[bot]'`) still FIRES on those PRs, but every job skips,
+          # so the run concludes `skipped` — which this gate rightly refuses
+          # to count (see runs_for). No success can ever exist, and the suite
+          # reads MISSING until the deadline strands the PR. Expose the author
+          # via env (PR_AUTHOR: ${{ github.event.pull_request.user.login }})
+          # and mirror the condition in the arm, exactly as you mirror paths
+          # (measured: a dependabot-exempt semgrep suite stranding every
+          # dependabot PR).
           wants() {
             local f
             while IFS= read -r f; do
