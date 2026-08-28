@@ -1,4 +1,9 @@
-# Workflow v2 — server-enforced merge gates for semi-autonomous repos
+# claude-code-multimodel-workflow
+
+**v2 — server-enforced merge gates for semi-autonomous repos.** (v1 of this
+repo packaged the full Claude Code workflow as a plugin; it survives at the
+`plugin-v1-archive` tag. v2 narrows to the piece that proved most worth
+sharing: the merge-gate infrastructure.)
 
 Templates for putting the **merge decision on the server** so that humans and
 coding agents can share a repo without per-PR human approval — and without
