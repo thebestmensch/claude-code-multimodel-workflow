@@ -86,6 +86,14 @@ anything less is theater:
 - **Agents holding the repo-admin credential can disable the ruleset.**
   Tampering is loud-and-logged, not impossible, until agents get their own
   non-admin identity.
+- **A reviewer bot allowed to request changes re-introduces a blocking gate
+  the ruleset can't see.** With a `pull_request` rule active, an outstanding
+  CHANGES_REQUESTED review blocks the merge even at approvals 0 — so a bot
+  configured to submit change requests (e.g. CodeRabbit's
+  `request_changes_workflow: true`) silently overrides the all-advisory
+  contract, and every false positive then needs a human dismissal. Configure
+  reviewer bots comment-only; this knob lives in the bot's config, not the
+  ruleset, which is why nothing here can enforce it.
 
 ## What's here
 
