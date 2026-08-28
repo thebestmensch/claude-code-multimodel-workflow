@@ -29,7 +29,11 @@ Copy the chosen templates into the repo:
 
 Resolve every `TODO(template)` marker. The one that deserves real care is
 merge-gate's `wants()` map: one case arm per suite, mirroring that suite's
-`paths:` filter, each suite's own workflow file included in its arm.
+`paths:` filter, each suite's own workflow file included in its arm. Mirror
+job-level guards too: a suite whose jobs all skip under an actor condition
+(dependabot exemptions are the common case) concludes `skipped` on those
+PRs — never a success — so a bare arm strands them at the gate's deadline;
+the arm must mirror the actor condition alongside the paths.
 
 **Pin the invariants with tests.** Pins 1–2 are not optional polish: they are
 the only mechanical guard against the one drift direction the gate cannot
